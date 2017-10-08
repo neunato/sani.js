@@ -1,0 +1,22 @@
+{
+  "name": "sani.js",
+  "version": "0.1.0",
+  "repository": "independentgeorge/sani.js",
+  "scripts": {
+    "build": "gulp bundle",
+    "watch": "gulp default"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-preset-env": "^1.6.0",
+    "glupost": "^3.0.0",
+    "rollup": "^0.50.0",
+    "rollup-plugin-commonjs": "^8.2.1",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "uglify-js": "^3.1.2"
+  },
+  "dependencies": {
+    "siteswap.js": "^0.1.0"
+  }
+}
