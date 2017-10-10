@@ -5,7 +5,7 @@ Canvas based siteswap animator in JavaScript for modern browsers.
 Supports (multiplex) asynchronous and synchronous juggling patterns.
 
 
-Check out this [simple example](https://independentgeorge.github.io/sani.js/)!
+[Check it out!](https://independentgeorge.github.io/sani.js/)
 
 ## Usage
 
@@ -33,9 +33,9 @@ Use the second parameter of the constructor to set the initial configuration.
 
 ```javascript
 const settings = {
-	fpb: 20,
-	dwell: 0.6,
-	slowdown: 1
+   fpb: 20,
+   dwell: 0.5,
+   slowdown: 1
 };
 const animator = new Animator("canvasID", settings);
 animator.start("(6x,4)*");
@@ -46,28 +46,27 @@ Or `.configure()` to do it after it's instantiated.
 ```javascript
 const animator = new Animator("canvasID");
 const settings = {
-	fpb: 20,
-	dwell: 0.6,
-	slowdown: 1
+   fpb: 20,
+   dwell: 0.5,
+   slowdown: 1
 };
 animator.configure(settings);
 animator.start("[54][65]1");
-
 ```
 
 Type and value of a property of the configuration object must be allowed by the following table to overwrite what was previously set. Invalid inputs are silently ignored.
 
 |Property        |Type            |Allowed values  |Default     |Description
 | -------------- | -------------- | -------------- | ---------- | -------------------------------------------------------------------
-|`fpb`           |*Number*        |positive integer         |20          |Beat duration in frames, where one frame lasts ~16.7 ms.<sup>1</sup>
-|`slowdown`      |*Number*        |positive float                    |2           |Number of real seconds per animator second.
-|`dwell`         |*Number*        |float [0-1], multiple of `dwellStep`                     |0.5         |Hold time, expressed as ratio of full to empty hand.<sup>2</sup>
-|`dwellStep`     |*Number*        |positive float                   |0.25        |Amount of dwell time between two catches of "twin multiplexes".<sup>3</sup>
-|`reversed`      |*Boolean*       |true, false              |false       |Inside or outside tosses.
-|`ballColor`         |*String*        |[css color][1]              |"#ff3636"   |Color of balls.
+|`fpb`           |*Number*        |positive integer|20          |Beat duration in frames, where one frame lasts ~16.7 ms.<sup>1</sup>
+|`slowdown`      |*Number*        |positive float  |2           |Number of real seconds per animator second.
+|`dwell`         |*Number*        |float [0-1], multiple of `dwellStep`    |0.5         |Hold time, expressed as ratio of full to empty hand.<sup>2</sup>
+|`dwellStep`     |*Number*        |positive float  |0.25        |Amount of dwell time between two catches of "twin multiplexes".<sup>3</sup>
+|`reversed`      |*Boolean*       |true, false     |false       |Inside or outside tosses.
+|`ballColor`     |*String*        |[css color][1]  |"#ff3636"   |Color of balls.
 
-<sup>1</sup> *Beat duration is doubled when juggling synchronously as jugglers tend to slow down in reality.*	
-<sup>2</sup> *Dwell time ranges 0-2 beats in asynchronous, and 0-1 in synchronous juggling.*	
+<sup>1</sup> *Beat duration is doubled when juggling synchronously as jugglers tend to slow down in reality.*  
+<sup>2</sup> *Dwell time ranges 0-2 beats in asynchronous, and 0-1 in synchronous juggling.*  
 <sup>3</sup> *In such multiplex groups, like `[55]`, one ball will be caught `dwellStep` of a beat later (or earlier, depending on `dwell`). The number of such multiplex tosses is limited to `(1 / dwellStep) - 1`.*
 
 
