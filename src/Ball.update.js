@@ -1,22 +1,18 @@
 
-function update(){
+// Elapsed time from beginning of animation.
 
-	// Negative `frameAt` means delay.
-	if( this.frameAt < 0 ){
-		this.frameAt++;
-		return;
-	}
+function update( delta ){
 	
-	const animation = this.animations[this.animationAt];
-	
-	if( this.frameAt === animation.frameCount ){
-		this.frameAt = 0;
-		this.animationAt = (this.animationAt + 1) % this.animations.length;
-		return this.update();
+   this.elapsed += delta;
+
+   const animation = this.animations[this.animationAt];
+	if( this.elapsed >= animation.duration ){
+      this.animationAt = (this.animationAt + 1) % this.animations.length;
+      this.elapsed = this.elapsed - animation.duration
+		return this.update(0);
 	}
 
-	this.position = animation.nextPosition(this.frameAt);
-	this.frameAt++;
+	this.position = animation.getPosition(this.elapsed);
 
 }
 

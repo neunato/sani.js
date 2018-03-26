@@ -1,4 +1,5 @@
 
+
 function update(){
 
 	// Cancel loop.
@@ -7,6 +8,11 @@ function update(){
 	}
 
 	this.request = window.requestAnimationFrame( this.update );
+
+   const now = performance.now();
+   const delta = now - this.timestamp;
+   this.timestamp = now;
+
 
 	// Canvas size changed, rescale animation.
 	const canvas = this.context.canvas;
@@ -24,7 +30,7 @@ function update(){
 	// Update ball positions.
 	this.clear();
 	for( const ball of this.balls )
-		ball.update();
+		ball.update(delta / this.settings.slowdown);
 	this.draw();
 
 }

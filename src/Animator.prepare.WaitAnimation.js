@@ -1,14 +1,14 @@
 
 class WaitAnimation {
 
-	constructor( frameCount, x, y ){
+	constructor( duration, x, y ){
 
-		this.frameCount = frameCount;
+      this.duration = duration;
 		this.position = { x, y };
 
 	}
 
-	nextPosition( frameAt ){
+	getPosition(){
 
 		return this.position;
 

@@ -35,59 +35,41 @@ class Animator {
 		const animator = this;
 		this.settings = {
 
-			// User configurable by `this.configure`. `dwell` and `fpb` are affected by the siteswap
-			// synchronicity and slowdown. That's the why for setters/getters.
-			_dwell: 0.5,
-			_fpb: 20,
-			_fps: 60,
+         // Configurable by `this.configure`.
+         _dwell: 0.5,             // Affected by siteswap synchronicity and slowdown. Getter below.
+         dwellStep: 0.25,
+         slowdown: 1,
+         reversed: false,
+         ballColor: "#ff3636",
+         beatDuration: 300,         // In miliseconds.
 
-			slowdown: 1,
-			reversed: false,
-			ballColor: "#ff3636",
+         // Not configurable.
+			ballRadius: 100,         // In milimetres.
+			catchWidth: 400,         // In milimetres.
+			innerHeight: 0,          // In milimetres. Set by `.scale()`.
+			innerWidth: 0,           // In milimetres. Set by `.scale()`.
+			catchHeight: 0,          // In milimetres. Set by `.scale()`.
 
-			dwellStep: 0.25,
-
-			// In metres.
-			ballRadius: 0.1,
-			catchWidth: 0.4,
-			innerHeight: 0,    // `.scale(innerWidth, innerHeight, catchHeight)` sets them.
-			innerWidth: 0,
-			catchHeight: 0,
-
-			multiplier: null,
-
-			// In pixels.
-			ballRadiusLimit: 5,
+			multiplier: null,        // Pixels per milimetre.
 
 
 			// Computed properties.
 			get multiplexTwinLimit(){
 				return 1 / this.dwellStep - 1;
 			},
+
 			get handsGap(){
 				if( animator.siteswap === null )
-					throw new Error("Hmmm.");
-				return Math.max(0.2, (9-3) / 9 / 10 * animator.siteswap.greatestValue) + (animator.siteswap.degree === 2 ? 0.2 : 0);
+					throw new Error("Can't compute `handsGap` without a siteswap.");
+				return (Math.max(0.2, (9-3) / 9 / 10 * animator.siteswap.greatestValue) + (animator.siteswap.degree === 2 ? 0.2 : 0)) * 1000;
 			},
 			get dwell(){
 				if( animator.siteswap === null )
-					throw new Error("Hmmm.");
+					throw new Error("Can't compute `dwell` without a siteswap.");
 				return animator.siteswap.degree === 1 ? round(this._dwell * 2) : this._dwell;
-			},
-			get fpb(){
-				if( animator.siteswap === null )
-					throw new Error("Hmmm.");
-				return round(this._fpb * animator.siteswap.degree * this.slowdown);
-			},
-			get fps(){
-				return this._fps * this.slowdown;
-			},
-			get bps(){
-				return this.fps / this.fpb;
 			},
 
 			set dwell( value ){  this._dwell = value;  },
-			set fpb( value ){  this._fpb = value;  }
 
 		};
 

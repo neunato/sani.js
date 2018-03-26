@@ -6,10 +6,10 @@ function Ball( color, frameOffset = 0 ){
 
 	this.position = { x: NaN, y: NaN };
 	this.color = color;
-	this.frameAt = frameOffset;
 
 	this.animationAt = 0;
 	this.animations = [];
+   this.elapsed = 0;
 
 }
 

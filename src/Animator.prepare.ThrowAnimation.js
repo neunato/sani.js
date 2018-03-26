@@ -1,10 +1,9 @@
 
 class ThrowAnimation {
 	
-	constructor( frameCount, fps, position, velocity, acceleration ){
+	constructor( duration, position, velocity, acceleration ){
 
-		this.frameCount = frameCount;
-		this.fps = fps;
+      this.duration = duration;
 
 		// Initial position and velocity.
 		this.position = position;
@@ -13,9 +12,9 @@ class ThrowAnimation {
 
 	}
 
-	nextPosition( frameAt ){
+   // Elapsed time from beginning of animation.
+	getPosition( time ){
 
-		const time = frameAt / this.fps;
 		const position = {
 			x: this.position.x + this.velocity.x * time,
 			y: this.position.y + this.velocity.y * time + this.acceleration.y * time * time * 0.5

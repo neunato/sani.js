@@ -1,13 +1,11 @@
 
-// Will `Number.isInteger()` ever fail due to rounding issues?
-// If so, use `.round` with every calculation.
 
 function configure( options ){
 
 	const settings = this.settings;
 
-	if( options.fpb !== undefined )
-		settings.fpb = options.fpb;
+   if( options.beatDuration !== undefined )
+      settings.beatDuration = options.beatDuration;
 
 	if( options.slowdown !== undefined )
 		settings.slowdown = options.slowdown;
@@ -24,18 +22,18 @@ function configure( options ){
 	if( options.reversed !== undefined )
 		settings.reversed = options.reversed;
 
-	// Get the fpb and dwell values unaffected by siteswap degree.
-	const { _fpb: fpb, _dwell: dwell, dwellStep, slowdown, ballColor, reversed } = settings;
+	// Get the unaffected _dwell value.
+	const { beatDuration, _dwell: dwell, dwellStep, slowdown, ballColor, reversed } = settings;
+
+   if( typeof beatDuration !== "number" )
+      throw new Error("Invalid configuration (`beatDuration` must be a number).");
+   if( beatDuration <= 0 )
+      throw new Error("Invalid configuration (`beatDuration` must be positive).");
 
 	if( typeof slowdown !== "number" )
 		throw new Error("Invalid configuration (`slowdown` must be a number).");
 	if( slowdown <= 0 )
 		throw new Error("Invalid configuration (`slowdown` must be positive).");
-
-	if( typeof fpb !== "number" )
-		throw new Error("Invalid configuration (`fpb` must be a number).");
-	if( fpb <= 0 )
-		throw new Error("Invalid configuration (`fpb` must be positive).");
 
 	if( typeof dwell !== "number" )
 		throw new Error("Invalid configuration (`dwell` must be a number).");
@@ -49,13 +47,6 @@ function configure( options ){
 		throw new Error("Invalid configuration (`dwellStep` can't be greater than `dwell`).");
 	if( dwell % dwellStep !== 0 )
 		throw new Error("Invalid configuration (`dwell` must be a multiple of `dwellStep`).");
-
-	if( !Number.isInteger(fpb * slowdown) )
-		throw new Error("Invalid configuration (`fpb * slowdown` must be an integer).");
-	if( !Number.isInteger(fpb * slowdown * dwell) )
-		throw new Error("Invalid configuration (`fpb * slowdown * dwell` must be an integer).");
-	if( !Number.isInteger(fpb * slowdown * dwellStep) )
-		throw new Error("Invalid configuration (`fpb * slowdown * dwellStep` must be an integer).");
 
 	if( typeof ballColor !== "string" )
 		throw new Error("Invalid configuration (`ballColor` must be a string).");

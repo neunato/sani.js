@@ -38,7 +38,11 @@ function start( siteswap, notation ){
 	}
 
 	this.paused = false;
+
    this.update = this.constructor.prototype.update.bind(this);
+
+   this.timestamp = performance.now()
+
 	this.request = window.requestAnimationFrame( this.update );
 
 }

@@ -18,9 +18,9 @@ const spline = new Spline(points);
 
 class CatchAnimation {
 
-	constructor( frameCount, x1, x2, height ){
+	constructor( duration, x1, x2, height ){
 
-		this.frameCount = frameCount;
+      this.duration = duration;
 		this.width = (x2 - x1);
 		this.yModifier = height / spline.maximum().y;
 		this.position = {
@@ -30,9 +30,9 @@ class CatchAnimation {
 
 	}
 
-	nextPosition( frameAt ){
+	getPosition( time ){
 
-		const percent = frameAt / this.frameCount;
+      const percent = time / this.duration
 		const position = {
 			x: this.position.x + percent * this.width,
 			y: this.position.y - spline.at(percent * 100) * this.yModifier

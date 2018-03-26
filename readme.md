@@ -33,9 +33,9 @@ Use the second parameter of the constructor to set the initial configuration.
 
 ```javascript
 const settings = {
-   fpb: 20,
+   beatDuration: 300,
    dwell: 0.5,
-   slowdown: 1
+   slowdown: 2
 };
 const animator = new Animator("canvasID", settings);
 animator.start("(6x,4)*");
@@ -46,9 +46,9 @@ Or `.configure()` to do it after it's instantiated.
 ```javascript
 const animator = new Animator("canvasID");
 const settings = {
-   fpb: 20,
+   beatDuration: 300,
    dwell: 0.5,
-   slowdown: 1
+   slowdown: 2
 };
 animator.configure(settings);
 animator.start("[54][65]1");
@@ -58,8 +58,8 @@ Type and value of a property of the configuration object must be allowed by the 
 
 |Property        |Type            |Allowed values  |Default     |Description
 | -------------- | -------------- | -------------- | ---------- | -------------------------------------------------------------------
-|`fpb`           |*Number*        |positive integer|20          |Beat duration in frames, where one frame lasts ~16.7 ms.<sup>1</sup>
-|`slowdown`      |*Number*        |positive float  |2           |Number of real seconds per animator second.
+|`beatDuration`  |*Number*        |positive float  |300         |Beat duration in miliseconds.<sup>1</sup>
+|`slowdown`      |*Number*        |float           |1           |Number of real seconds per animator second.
 |`dwell`         |*Number*        |float [0-1], multiple of `dwellStep`    |0.5         |Hold time, expressed as ratio of full to empty hand.<sup>2</sup>
 |`dwellStep`     |*Number*        |positive float  |0.25        |Amount of dwell time between two catches of "twin multiplexes".<sup>3</sup>
 |`reversed`      |*Boolean*       |true, false     |false       |Inside or outside tosses.
@@ -70,32 +70,16 @@ Type and value of a property of the configuration object must be allowed by the 
 <sup>3</sup> *In such multiplex groups, like `[55]`, one ball will be caught `dwellStep` of a beat later (or earlier, depending on `dwell`). The number of such multiplex tosses is limited to `(1 / dwellStep) - 1`.*
 
 
-The number of frames in every animation has to be an integer. The following demands must be satisfied for the configuration to work:
-
-```javascript
-// Number of frames in any throw + catch animation pair.
-Number.isInteger( fpb * slowdown )
-
-// Number of frames in a catch animation.
-Number.isInteger( fpb * slowdown * dwell )
-
-// Number of frames two animations of twin multiplex tosses will differ in.
-Number.isInteger( fpb * slowdown * dwellStep )
-```
-
-
 ## To do
 
 
 High priority
 
 - Test browser support and add polyfills.
-- Time based animation (if 120Hz+ monitors really are a thing).
 - Cache canvas arc paths and draw images. I've noticed some lag with large balls in Firefox.
 
 Low priority
 
-- Allow for animations of non integer frame counts (but still prefer them).
 - Start juggling in the middle of a siteswap (optionally?).
 - Create and hook up a space time diagram.
 - Bundle settings in presets.

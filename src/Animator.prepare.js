@@ -7,7 +7,7 @@ import { round }           from "./round";
 import { lcm }             from "./lcm";
 
 
-const gravity = { x: 0, y: -9.81 };
+const gravity = { x: 0, y: -9.81 / 1000 };
 
 
 // These are used to cache some computations and are essential for 
@@ -35,9 +35,11 @@ function calcThrowHeight( airTime, beatDuration ){
 
 }
 
-function calcCatchHeight( value, bps, dwell ){
+function calcCatchHeight( value, beatDuration, dwell ){
 
-	if( catchHeights[value] === undefined ){
+   if( catchHeights[value] === undefined ){
+
+      const bps = 1 / beatDuration;
 
 		// Higher throw means higher catch. 
 		const factor1 = value * 0.04;
@@ -48,8 +50,7 @@ function calcCatchHeight( value, bps, dwell ){
 		// Greater dwell means higher catch.
 		const factor3 = (dwell - 0.5) * 0.5 * factor1 * 0.4;
 
-
-		catchHeights[value] = factor1 + factor2 + factor3;
+		catchHeights[value] = (factor1 + factor2 + factor3) * 1000;
 	}
 
 	return catchHeights[value];
@@ -123,21 +124,6 @@ function strictifyThrows( siteswap ){
 }
 
 
-// Assign negative `frameAt` values for balls which have to
-// wait before entering the screen.
-
-function delayBalls( siteswap, balls, fpb ){
-	
-	const schedule = siteswap.strictStates[0].schedule;
-	for( const state of schedule ){
-		for( let beat = 0; beat < state.length; beat++ ){
-			for( const id of state[beat] )
-				balls[id - 1].frameAt = -beat * fpb;
-		}
-	}
-
-}
-
 
 // Assign the appropriate animations to balls, which are looped over in `Ball.prototype.update`.
 
@@ -153,10 +139,9 @@ function prepare(){
 	throwHeights = {};
 	throwVelocities = {};
 
-	const beatDuration = settings.fpb / settings.fps;
+	const beatDuration = settings.beatDuration;
 	const catchWidth = settings.catchWidth;
 	const innerWidth = settings.catchWidth * 2 + settings.handsGap;
-
 
 	const throws = strictifyThrows(siteswap);
 	const n = lcm( throws.length, siteswap.strictStates.length );
@@ -206,10 +191,8 @@ function prepare(){
 				if( settings.reversed )
 					[x1, x2] = [x2, x1];
 
-				const frameCount = round(launchTime * settings.fpb);
-
-				const height = calcCatchHeight( lowestValue, settings.bps, dwellTime );
-				ball.animations.push( new CatchAnimation(frameCount, x1, x2, height) );
+				const height = calcCatchHeight( lowestValue, beatDuration, dwellTime );
+				ball.animations.push( new CatchAnimation(launchTime * beatDuration, x1, x2, height) );
 				}
 
 
@@ -217,7 +200,6 @@ function prepare(){
 				{
 				let x1 = toss.handFrom === 0 ? catchWidth : innerWidth - catchWidth;
 				let x2 = toss.handTo === 0 ? 0 : innerWidth;
-				const frameCount = round(airTime * settings.fpb);
 
 				if( settings.reversed ){
 
@@ -241,13 +223,11 @@ function prepare(){
 					y: calcThrowVelocity(airTime, beatDuration)
 				};
 
-				ball.animations.push( new ThrowAnimation(frameCount, settings.fps, position, velocity, gravity) );
-
+				ball.animations.push( new ThrowAnimation(airTime * beatDuration, position, velocity, gravity) );
 
 				// Wait animation.
 				if( waitTime > 0 ){
-					const frameCount = round(waitTime * settings.fpb);
-					ball.animations.push( new WaitAnimation(frameCount, x2, 0) );
+					ball.animations.push( new WaitAnimation(waitTime * beatDuration, x2, 0) );
 				}
 					
 				}
@@ -263,8 +243,19 @@ function prepare(){
 
 	this.scale(innerWidth, innerHeight, greatestCatchHeight);
 
-	// Delay initial animations.
-	delayBalls( siteswap, this.balls, settings.fpb );
+
+
+   // Delay initial animations.
+   const schedule = siteswap.strictStates[0].schedule;
+   for( const state of schedule ){
+      for( let beat = 0; beat < state.length; beat++ ){
+         for( const id of state[beat] ){
+            this.balls[id - 1].animations[-1] = new WaitAnimation(beat * beatDuration)
+            this.balls[id - 1].animationAt = -1
+         }
+      }
+   }
+
 
 }
 

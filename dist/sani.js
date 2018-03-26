@@ -101,6 +101,11 @@ function update(){
 
 	this.request = window.requestAnimationFrame( this.update );
 
+   const now = performance.now();
+   const delta = now - this.timestamp;
+   this.timestamp = now;
+
+
 	// Canvas size changed, rescale animation.
 	const canvas = this.context.canvas;
 	if( canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight ){
@@ -117,20 +122,17 @@ function update(){
 	// Update ball positions.
 	this.clear();
 	for( const ball of this.balls )
-		ball.update();
+		ball.update(delta / this.settings.slowdown);
 	this.draw();
 
 }
-
-// Will `Number.isInteger()` ever fail due to rounding issues?
-// If so, use `.round` with every calculation.
 
 function configure( options ){
 
 	const settings = this.settings;
 
-	if( options.fpb !== undefined )
-		settings.fpb = options.fpb;
+   if( options.beatDuration !== undefined )
+      settings.beatDuration = options.beatDuration;
 
 	if( options.slowdown !== undefined )
 		settings.slowdown = options.slowdown;
@@ -147,18 +149,18 @@ function configure( options ){
 	if( options.reversed !== undefined )
 		settings.reversed = options.reversed;
 
-	// Get the fpb and dwell values unaffected by siteswap degree.
-	const { _fpb: fpb, _dwell: dwell, dwellStep, slowdown, ballColor, reversed } = settings;
+	// Get the unaffected _dwell value.
+	const { beatDuration, _dwell: dwell, dwellStep, slowdown, ballColor, reversed } = settings;
+
+   if( typeof beatDuration !== "number" )
+      throw new Error("Invalid configuration (`beatDuration` must be a number).");
+   if( beatDuration <= 0 )
+      throw new Error("Invalid configuration (`beatDuration` must be positive).");
 
 	if( typeof slowdown !== "number" )
 		throw new Error("Invalid configuration (`slowdown` must be a number).");
 	if( slowdown <= 0 )
 		throw new Error("Invalid configuration (`slowdown` must be positive).");
-
-	if( typeof fpb !== "number" )
-		throw new Error("Invalid configuration (`fpb` must be a number).");
-	if( fpb <= 0 )
-		throw new Error("Invalid configuration (`fpb` must be positive).");
 
 	if( typeof dwell !== "number" )
 		throw new Error("Invalid configuration (`dwell` must be a number).");
@@ -173,13 +175,6 @@ function configure( options ){
 	if( dwell % dwellStep !== 0 )
 		throw new Error("Invalid configuration (`dwell` must be a multiple of `dwellStep`).");
 
-	if( !Number.isInteger(fpb * slowdown) )
-		throw new Error("Invalid configuration (`fpb * slowdown` must be an integer).");
-	if( !Number.isInteger(fpb * slowdown * dwell) )
-		throw new Error("Invalid configuration (`fpb * slowdown * dwell` must be an integer).");
-	if( !Number.isInteger(fpb * slowdown * dwellStep) )
-		throw new Error("Invalid configuration (`fpb * slowdown * dwellStep` must be an integer).");
-
 	if( typeof ballColor !== "string" )
 		throw new Error("Invalid configuration (`ballColor` must be a string).");
 	if( !/^#[0-9a-f]{3}(?:[0-9a-f]{3})?/i.test(ballColor) )
@@ -190,24 +185,20 @@ function configure( options ){
 
 }
 
-function update$1(){
+// Elapsed time from beginning of animation.
 
-	// Negative `frameAt` means delay.
-	if( this.frameAt < 0 ){
-		this.frameAt++;
-		return;
-	}
+function update$1( delta ){
 	
-	const animation = this.animations[this.animationAt];
-	
-	if( this.frameAt === animation.frameCount ){
-		this.frameAt = 0;
-		this.animationAt = (this.animationAt + 1) % this.animations.length;
-		return this.update();
+   this.elapsed += delta;
+
+   const animation = this.animations[this.animationAt];
+	if( this.elapsed >= animation.duration ){
+      this.animationAt = (this.animationAt + 1) % this.animations.length;
+      this.elapsed = this.elapsed - animation.duration;
+		return this.update(0);
 	}
 
-	this.position = animation.nextPosition(this.frameAt);
-	this.frameAt++;
+	this.position = animation.getPosition(this.elapsed);
 
 }
 
@@ -215,10 +206,10 @@ function Ball( color, frameOffset = 0 ){
 
 	this.position = { x: NaN, y: NaN };
 	this.color = color;
-	this.frameAt = frameOffset;
 
 	this.animationAt = 0;
 	this.animations = [];
+   this.elapsed = 0;
 
 }
 
@@ -226,10 +217,9 @@ Ball.prototype.update = update$1;
 
 class ThrowAnimation {
 	
-	constructor( frameCount, fps, position, velocity, acceleration ){
+	constructor( duration, position, velocity, acceleration ){
 
-		this.frameCount = frameCount;
-		this.fps = fps;
+      this.duration = duration;
 
 		// Initial position and velocity.
 		this.position = position;
@@ -238,9 +228,9 @@ class ThrowAnimation {
 
 	}
 
-	nextPosition( frameAt ){
+   // Elapsed time from beginning of animation.
+	getPosition( time ){
 
-		const time = frameAt / this.fps;
 		const position = {
 			x: this.position.x + this.velocity.x * time,
 			y: this.position.y + this.velocity.y * time + this.acceleration.y * time * time * 0.5
@@ -415,9 +405,9 @@ const spline = new Spline(points);
 
 class CatchAnimation {
 
-	constructor( frameCount, x1, x2, height ){
+	constructor( duration, x1, x2, height ){
 
-		this.frameCount = frameCount;
+      this.duration = duration;
 		this.width = (x2 - x1);
 		this.yModifier = height / spline.maximum().y;
 		this.position = {
@@ -427,9 +417,9 @@ class CatchAnimation {
 
 	}
 
-	nextPosition( frameAt ){
+	getPosition( time ){
 
-		const percent = frameAt / this.frameCount;
+      const percent = time / this.duration;
 		const position = {
 			x: this.position.x + percent * this.width,
 			y: this.position.y - spline.at(percent * 100) * this.yModifier
@@ -442,14 +432,14 @@ class CatchAnimation {
 
 class WaitAnimation {
 
-	constructor( frameCount, x, y ){
+	constructor( duration, x, y ){
 
-		this.frameCount = frameCount;
+      this.duration = duration;
 		this.position = { x, y };
 
 	}
 
-	nextPosition( frameAt ){
+	getPosition(){
 
 		return this.position;
 
@@ -480,7 +470,7 @@ function lcm( a, b ){
 
 }
 
-const gravity = { x: 0, y: -9.81 };
+const gravity = { x: 0, y: -9.81 / 1000 };
 
 
 // These are used to cache some computations and are essential for 
@@ -508,9 +498,11 @@ function calcThrowHeight( airTime, beatDuration ){
 
 }
 
-function calcCatchHeight( value, bps, dwell ){
+function calcCatchHeight( value, beatDuration, dwell ){
 
-	if( catchHeights[value] === undefined ){
+   if( catchHeights[value] === undefined ){
+
+      const bps = 1 / beatDuration;
 
 		// Higher throw means higher catch. 
 		const factor1 = value * 0.04;
@@ -521,8 +513,7 @@ function calcCatchHeight( value, bps, dwell ){
 		// Greater dwell means higher catch.
 		const factor3 = (dwell - 0.5) * 0.5 * factor1 * 0.4;
 
-
-		catchHeights[value] = factor1 + factor2 + factor3;
+		catchHeights[value] = (factor1 + factor2 + factor3) * 1000;
 	}
 
 	return catchHeights[value];
@@ -596,21 +587,6 @@ function strictifyThrows( siteswap ){
 }
 
 
-// Assign negative `frameAt` values for balls which have to
-// wait before entering the screen.
-
-function delayBalls( siteswap, balls, fpb ){
-	
-	const schedule = siteswap.strictStates[0].schedule;
-	for( const state of schedule ){
-		for( let beat = 0; beat < state.length; beat++ ){
-			for( const id of state[beat] )
-				balls[id - 1].frameAt = -beat * fpb;
-		}
-	}
-
-}
-
 
 // Assign the appropriate animations to balls, which are looped over in `Ball.prototype.update`.
 
@@ -626,10 +602,9 @@ function prepare(){
 	throwHeights = {};
 	throwVelocities = {};
 
-	const beatDuration = settings.fpb / settings.fps;
+	const beatDuration = settings.beatDuration;
 	const catchWidth = settings.catchWidth;
 	const innerWidth = settings.catchWidth * 2 + settings.handsGap;
-
 
 	const throws = strictifyThrows(siteswap);
 	const n = lcm( throws.length, siteswap.strictStates.length );
@@ -679,10 +654,8 @@ function prepare(){
 				if( settings.reversed )
 					[x1, x2] = [x2, x1];
 
-				const frameCount = round(launchTime * settings.fpb);
-
-				const height = calcCatchHeight( lowestValue, settings.bps, dwellTime );
-				ball.animations.push( new CatchAnimation(frameCount, x1, x2, height) );
+				const height = calcCatchHeight( lowestValue, beatDuration, dwellTime );
+				ball.animations.push( new CatchAnimation(launchTime * beatDuration, x1, x2, height) );
 				}
 
 
@@ -690,7 +663,6 @@ function prepare(){
 				{
 				let x1 = toss.handFrom === 0 ? catchWidth : innerWidth - catchWidth;
 				let x2 = toss.handTo === 0 ? 0 : innerWidth;
-				const frameCount = round(airTime * settings.fpb);
 
 				if( settings.reversed ){
 
@@ -714,13 +686,11 @@ function prepare(){
 					y: calcThrowVelocity(airTime, beatDuration)
 				};
 
-				ball.animations.push( new ThrowAnimation(frameCount, settings.fps, position, velocity, gravity) );
-
+				ball.animations.push( new ThrowAnimation(airTime * beatDuration, position, velocity, gravity) );
 
 				// Wait animation.
 				if( waitTime > 0 ){
-					const frameCount = round(waitTime * settings.fpb);
-					ball.animations.push( new WaitAnimation(frameCount, x2, 0) );
+					ball.animations.push( new WaitAnimation(waitTime * beatDuration, x2, 0) );
 				}
 					
 				}
@@ -736,8 +706,19 @@ function prepare(){
 
 	this.scale(innerWidth, innerHeight, greatestCatchHeight);
 
-	// Delay initial animations.
-	delayBalls( siteswap, this.balls, settings.fpb );
+
+
+   // Delay initial animations.
+   const schedule = siteswap.strictStates[0].schedule;
+   for( const state of schedule ){
+      for( let beat = 0; beat < state.length; beat++ ){
+         for( const id of state[beat] ){
+            this.balls[id - 1].animations[-1] = new WaitAnimation(beat * beatDuration);
+            this.balls[id - 1].animationAt = -1;
+         }
+      }
+   }
+
 
 }
 
@@ -2621,7 +2602,11 @@ function start( siteswap$$1, notation ){
 	}
 
 	this.paused = false;
+
    this.update = this.constructor.prototype.update.bind(this);
+
+   this.timestamp = performance.now();
+
 	this.request = window.requestAnimationFrame( this.update );
 
 }
@@ -2692,59 +2677,41 @@ class Animator {
 		const animator = this;
 		this.settings = {
 
-			// User configurable by `this.configure`. `dwell` and `fpb` are affected by the siteswap
-			// synchronicity and slowdown. That's the why for setters/getters.
-			_dwell: 0.5,
-			_fpb: 20,
-			_fps: 60,
+         // Configurable by `this.configure`.
+         _dwell: 0.5,             // Affected by siteswap synchronicity and slowdown. Getter below.
+         dwellStep: 0.25,
+         slowdown: 1,
+         reversed: false,
+         ballColor: "#ff3636",
+         beatDuration: 300,         // In miliseconds.
 
-			slowdown: 1,
-			reversed: false,
-			ballColor: "#ff3636",
+         // Not configurable.
+			ballRadius: 100,         // In milimetres.
+			catchWidth: 400,         // In milimetres.
+			innerHeight: 0,          // In milimetres. Set by `.scale()`.
+			innerWidth: 0,           // In milimetres. Set by `.scale()`.
+			catchHeight: 0,          // In milimetres. Set by `.scale()`.
 
-			dwellStep: 0.25,
-
-			// In metres.
-			ballRadius: 0.1,
-			catchWidth: 0.4,
-			innerHeight: 0,    // `.scale(innerWidth, innerHeight, catchHeight)` sets them.
-			innerWidth: 0,
-			catchHeight: 0,
-
-			multiplier: null,
-
-			// In pixels.
-			ballRadiusLimit: 5,
+			multiplier: null,        // Pixels per milimetre.
 
 
 			// Computed properties.
 			get multiplexTwinLimit(){
 				return 1 / this.dwellStep - 1;
 			},
+
 			get handsGap(){
 				if( animator.siteswap === null )
-					throw new Error("Hmmm.");
-				return Math.max(0.2, (9-3) / 9 / 10 * animator.siteswap.greatestValue) + (animator.siteswap.degree === 2 ? 0.2 : 0);
+					throw new Error("Can't compute `handsGap` without a siteswap.");
+				return (Math.max(0.2, (9-3) / 9 / 10 * animator.siteswap.greatestValue) + (animator.siteswap.degree === 2 ? 0.2 : 0)) * 1000;
 			},
 			get dwell(){
 				if( animator.siteswap === null )
-					throw new Error("Hmmm.");
+					throw new Error("Can't compute `dwell` without a siteswap.");
 				return animator.siteswap.degree === 1 ? round(this._dwell * 2) : this._dwell;
-			},
-			get fpb(){
-				if( animator.siteswap === null )
-					throw new Error("Hmmm.");
-				return round(this._fpb * animator.siteswap.degree * this.slowdown);
-			},
-			get fps(){
-				return this._fps * this.slowdown;
-			},
-			get bps(){
-				return this.fps / this.fpb;
 			},
 
 			set dwell( value ){  this._dwell = value;  },
-			set fpb( value ){  this._fpb = value;  }
 
 		};
 
