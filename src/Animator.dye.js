@@ -15,8 +15,10 @@ function dye( color, id ){
 	
 
 	if( this.paused ){
-		this.clear();
-		this.draw();
+	   for( const ball of this.balls )
+	      ball.clear(this.context, this.settings);
+	   for( const ball of this.balls )
+	      ball.draw(this.context, this.settings);
 	}
 
 }

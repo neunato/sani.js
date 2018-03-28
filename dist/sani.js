@@ -9,42 +9,13 @@ function pause(){
 
 function stop(){
 
-   this.clear();
+   for( const ball of this.balls )
+      ball.clear(this.context, this.settings);
+   
    this.loop.kill();
    this.loop = null;
    this.siteswap = null;
    this.balls.length = 0;
-
-}
-
-function clear(){
-
-	// Clear an additional 2px pixels of width to fix occasional subpixel trails.
-	const settings = this.settings;
-	const width = (settings.ballRadius * settings.multiplier + 2) * 2;
-	for( const ball of this.balls ){
-		const x = ball.position.x * settings.multiplier - width / 2;
-		const y = ball.position.y * settings.multiplier - width / 2;
-		this.context.clearRect(x, y, width, width);
-	}
-
-}
-
-function draw(){
-
-	const context = this.context;
-	const settings = this.settings;
-	const radius = settings.ballRadius * settings.multiplier;
-	for( const ball of this.balls ){
-		const x = ball.position.x * settings.multiplier;
-		const y = ball.position.y * settings.multiplier;
-		context.beginPath();
-		context.arc(x, y, radius, 0, Math.PI * 2);
-		context.fillStyle = ball.color;
-		context.globalAlpha = ball.position.y > 0 ? 0.9 : 0.55;
-		context.fill();
-		context.closePath();
-	}
 
 }
 
@@ -107,11 +78,18 @@ function update( delta ){
 		return;
 	}
 
-	// Update ball positions.
-	this.clear();
-	for( const ball of this.balls )
-		ball.update(delta / this.settings.slowdown);
-	this.draw();
+
+
+ 
+   // Update ball positions.
+   for( const ball of this.balls ){
+      ball.clear(this.context, this.settings);
+   }
+
+   for( const ball of this.balls ){
+      ball.update(delta / this.settings.slowdown);   
+      ball.draw(this.context, this.settings);
+   }
 
 }
 
@@ -173,35 +151,60 @@ function configure( options ){
 
 }
 
-// Elapsed time from beginning of animation.
+class Ball {
+      
+   constructor( color ){
 
-function update$1( delta ){
-	
-   this.elapsed += delta;
+      this.position = { x: NaN, y: NaN };
+      this.color = color;
+      this.animationAt = 0;
+      this.animations = [];
+      this.elapsed = 0;
 
-   const animation = this.animations[this.animationAt];
-	if( this.elapsed >= animation.duration ){
-      this.animationAt = (this.animationAt + 1) % this.animations.length;
-      this.elapsed = this.elapsed - animation.duration;
-		return this.update(0);
-	}
+   }
 
-	this.position = animation.getPosition(this.elapsed);
+   update( delta ){
+      
+      this.elapsed += delta;
+
+      const animation = this.animations[this.animationAt];
+      if( this.elapsed >= animation.duration ){
+         this.animationAt = (this.animationAt + 1) % this.animations.length;
+         this.elapsed = this.elapsed - animation.duration;
+         return this.update(0);
+      }
+
+      this.position = animation.getPosition(this.elapsed);
+
+   }
+
+   clear( context, settings ){
+
+      const { ballRadius, multiplier } = settings;
+
+      // Clear an additional 2px pixels of width to fix occasional subpixel trails.
+      const width = (ballRadius * multiplier + 2) * 2;
+      const x = this.position.x * multiplier - width / 2;
+      const y = this.position.y * multiplier - width / 2;
+      context.clearRect(x, y, width, width);
+
+   }
+
+   draw( context, settings ){
+
+      const radius = settings.ballRadius * settings.multiplier;
+      const x = this.position.x * settings.multiplier;
+      const y = this.position.y * settings.multiplier;
+      context.beginPath();
+      context.arc(x, y, radius, 0, Math.PI * 2);
+      context.fillStyle = this.color;
+      context.globalAlpha = this.position.y > 0 ? 0.9 : 0.55;
+      context.fill();
+      context.closePath();
+
+   }
 
 }
-
-function Ball( color, frameOffset = 0 ){
-
-	this.position = { x: NaN, y: NaN };
-	this.color = color;
-
-	this.animationAt = 0;
-	this.animations = [];
-   this.elapsed = 0;
-
-}
-
-Ball.prototype.update = update$1;
 
 class ThrowAnimation {
 	
@@ -2661,8 +2664,10 @@ function dye( color, id ){
 	
 
 	if( this.paused ){
-		this.clear();
-		this.draw();
+	   for( const ball of this.balls )
+	      ball.clear(this.context, this.settings);
+	   for( const ball of this.balls )
+	      ball.draw(this.context, this.settings);
 	}
 
 }
@@ -2736,8 +2741,6 @@ class Animator {
 Animator.prototype.start     = start;
 Animator.prototype.pause     = pause;
 Animator.prototype.stop      = stop;
-Animator.prototype.draw      = draw;
-Animator.prototype.clear     = clear;
 Animator.prototype.scale     = scale;
 Animator.prototype.update    = update;
 Animator.prototype.configure = configure;

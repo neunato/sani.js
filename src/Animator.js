@@ -1,8 +1,6 @@
 
 import { pause }     from "./Animator.pause";
 import { stop }      from "./Animator.stop";
-import { clear }     from "./Animator.clear";
-import { draw }      from "./Animator.draw";
 import { scale }     from "./Animator.scale";
 import { update }    from "./Animator.update";
 import { configure } from "./Animator.configure";
@@ -81,8 +79,6 @@ class Animator {
 Animator.prototype.start     = start;
 Animator.prototype.pause     = pause;
 Animator.prototype.stop      = stop;
-Animator.prototype.draw      = draw;
-Animator.prototype.clear     = clear;
 Animator.prototype.scale     = scale;
 Animator.prototype.update    = update;
 Animator.prototype.configure = configure;

@@ -1,7 +1,9 @@
 
 function stop(){
 
-   this.clear();
+   for( const ball of this.balls )
+      ball.clear(this.context, this.settings);
+   
    this.loop.kill();
    this.loop = null;
    this.siteswap = null;

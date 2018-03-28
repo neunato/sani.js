@@ -15,11 +15,18 @@ function update( delta ){
 		return;
 	}
 
-	// Update ball positions.
-	this.clear();
-	for( const ball of this.balls )
-		ball.update(delta / this.settings.slowdown);
-	this.draw();
+
+
+ 
+   // Update ball positions.
+   for( const ball of this.balls ){
+      ball.clear(this.context, this.settings);
+   }
+
+   for( const ball of this.balls ){
+      ball.update(delta / this.settings.slowdown);   
+      ball.draw(this.context, this.settings);
+   }
 
 }
 
