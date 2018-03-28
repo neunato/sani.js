@@ -24,7 +24,7 @@ class Animator {
 
 
 		this.context  = element.getContext("2d");
-		this.request  = null;
+		this.loop     = null;
 		this.paused   = false;
 		
 		this.siteswap = null;

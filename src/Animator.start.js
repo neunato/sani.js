@@ -1,11 +1,11 @@
 
 import Siteswap from "siteswap.js";
-
+import { Loop } from "./Loop";
 
 function start( siteswap, notation ){
 
 	// Already running.
-	if( this.request ){
+	if( this.loop ){
 		this.stop();
 	}
 
@@ -37,13 +37,10 @@ function start( siteswap, notation ){
 		throw new Error("Balls too small for this screen.");
 	}
 
+   const update = this.constructor.prototype.update.bind(this)
+
 	this.paused = false;
-
-   this.update = this.constructor.prototype.update.bind(this);
-
-   this.timestamp = performance.now()
-
-	this.request = window.requestAnimationFrame( this.update );
+   this.loop = new Loop(update);
 
 }
 

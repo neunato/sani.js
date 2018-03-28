@@ -9,9 +9,9 @@ function pause(){
 
 function stop(){
 
-	window.cancelAnimationFrame(this.request);
    this.clear();
-   this.request = null;
+   this.loop.kill();
+   this.loop = null;
    this.siteswap = null;
    this.balls.length = 0;
 
@@ -92,19 +92,7 @@ function scale( width, height, catchHeight ){
 
 }
 
-function update(){
-
-	// Cancel loop.
-	if( this.request === null ){
-		return;
-	}
-
-	this.request = window.requestAnimationFrame( this.update );
-
-   const now = performance.now();
-   const delta = now - this.timestamp;
-   this.timestamp = now;
-
+function update( delta ){
 
 	// Canvas size changed, rescale animation.
 	const canvas = this.context.canvas;
@@ -2566,10 +2554,38 @@ module.exports = Siteswap;
 return module.exports;});
 });
 
+class Loop {
+      
+   constructor( callback ){
+      
+      this.callback  = callback;
+      this.update    = this.update.bind(this);
+      this.request   = window.requestAnimationFrame(this.update);
+      this.timestamp = 0;
+
+   }
+
+   update( now ){
+
+      const delta = now - this.timestamp;
+      this.timestamp = now;
+      this.request = window.requestAnimationFrame(this.update);
+      this.callback(delta);
+
+   }
+
+   kill(){
+
+      window.cancelAnimationFrame(this.request);
+
+   }
+
+}
+
 function start( siteswap$$1, notation ){
 
 	// Already running.
-	if( this.request ){
+	if( this.loop ){
 		this.stop();
 	}
 
@@ -2601,13 +2617,10 @@ function start( siteswap$$1, notation ){
 		throw new Error("Balls too small for this screen.");
 	}
 
+   const update = this.constructor.prototype.update.bind(this);
+
 	this.paused = false;
-
-   this.update = this.constructor.prototype.update.bind(this);
-
-   this.timestamp = performance.now();
-
-	this.request = window.requestAnimationFrame( this.update );
+   this.loop = new Loop(update);
 
 }
 
@@ -2666,7 +2679,7 @@ class Animator {
 
 
 		this.context  = element.getContext("2d");
-		this.request  = null;
+		this.loop     = null;
 		this.paused   = false;
 		
 		this.siteswap = null;

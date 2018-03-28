@@ -1,18 +1,6 @@
 
 
-function update(){
-
-	// Cancel loop.
-	if( this.request === null ){
-		return;
-	}
-
-	this.request = window.requestAnimationFrame( this.update );
-
-   const now = performance.now();
-   const delta = now - this.timestamp;
-   this.timestamp = now;
-
+function update( delta ){
 
 	// Canvas size changed, rescale animation.
 	const canvas = this.context.canvas;
