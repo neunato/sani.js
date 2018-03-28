@@ -1,718 +1,6 @@
 var Animator = (function () {
 'use strict';
 
-function pause(){
-
-	this.paused = !this.paused;
-
-}
-
-function stop(){
-
-   for( const ball of this.balls )
-      ball.clear(this.context, this.settings);
-   
-   this.loop.kill();
-   this.loop = null;
-   this.siteswap = null;
-   this.balls.length = 0;
-
-}
-
-// Resizes the canvas, scales and centers animation. Optionally, the sizes in metres can be
-// set (happens in `.prepare()` when the animations are calculated).
-
-function scale( width, height, catchHeight ){
-
-	const canvas = this.context.canvas;
-	const settings = this.settings;
-
-	// Set new inner size, in metres.
-	if( width && height && catchHeight ){
-		settings.innerWidth = width;
-		settings.innerHeight = height;
-		settings.catchHeight = catchHeight;
-	}
-
-	// Set new canvas size.
-	canvas.width = canvas.clientWidth;
-	canvas.height = canvas.clientHeight;
-
-	// Convert metres to pixels.
-	settings.multiplier = Math.max(0, Math.min(
-		canvas.width / (settings.innerWidth + settings.ballRadius * 2),
-		canvas.height / (settings.innerHeight + settings.ballRadius * 2)
-	));
-
-	// Center the animation by translating the canvas. This adjusts for the internal y-origin that
-	// matches catch height and the required offset of one screen as y axis will be inverted.
-	const surplus = {
-		x: Math.max(0, canvas.clientWidth - (settings.innerWidth + settings.ballRadius * 2) * settings.multiplier),
-		y: Math.max(0, canvas.clientHeight - (settings.innerHeight + settings.ballRadius * 2) * settings.multiplier)
-	};
-	const offset = {
-		x: surplus.x * 0.5 + settings.ballRadius * settings.multiplier,
-		y: surplus.y * 0.5 + settings.ballRadius * settings.multiplier
-	};
-
-
-	this.context.translate(offset.x, canvas.height - offset.y - settings.catchHeight * settings.multiplier);
-	
-	// Invert y axis.
-	this.context.scale(1, -1);
-
-}
-
-function update( delta ){
-
-	// Canvas size changed, rescale animation.
-	const canvas = this.context.canvas;
-	if( canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight ){
-		this.scale();
-
-		if( this.paused )   // If paused stuff won't redraw, that's why.
-			this.draw();
-	}
-	
-	if( this.paused ){
-		return;
-	}
-
-
-
- 
-   // Update ball positions.
-   for( const ball of this.balls ){
-      ball.clear(this.context, this.settings);
-   }
-
-   for( const ball of this.balls ){
-      ball.update(delta / this.settings.slowdown);   
-      ball.draw(this.context, this.settings);
-   }
-
-}
-
-function configure( options ){
-
-	const settings = this.settings;
-
-   if( options.beatDuration !== undefined )
-      settings.beatDuration = options.beatDuration;
-
-	if( options.slowdown !== undefined )
-		settings.slowdown = options.slowdown;
-
-	if( options.dwell !== undefined )
-		settings.dwell = options.dwell;
-
-	if( options.dwellStep !== undefined )
-		settings.dwellStep = options.dwellStep;
-
-	if( options.ballColor !== undefined )
-		settings.ballColor = options.ballColor;
-
-	if( options.reversed !== undefined )
-		settings.reversed = options.reversed;
-
-	// Get the unaffected _dwell value.
-	const { beatDuration, _dwell: dwell, dwellStep, slowdown, ballColor, reversed } = settings;
-
-   if( typeof beatDuration !== "number" )
-      throw new Error("Invalid configuration (`beatDuration` must be a number).");
-   if( beatDuration <= 0 )
-      throw new Error("Invalid configuration (`beatDuration` must be positive).");
-
-	if( typeof slowdown !== "number" )
-		throw new Error("Invalid configuration (`slowdown` must be a number).");
-	if( slowdown <= 0 )
-		throw new Error("Invalid configuration (`slowdown` must be positive).");
-
-	if( typeof dwell !== "number" )
-		throw new Error("Invalid configuration (`dwell` must be a number).");
-	if( dwell < 0 || dwell > 1 )
-		throw new Error("Invalid configuration (`dwell` must be in [0-1] range).");
-	if( typeof dwellStep !== "number" )
-		throw new Error("Invalid configuration (`dwellStep` must be a number).");
-	if( dwellStep <= 0 )
-		throw new Error("Invalid configuration (`dwellStep` must be positive).");
-	if( dwellStep > dwell )
-		throw new Error("Invalid configuration (`dwellStep` can't be greater than `dwell`).");
-	if( dwell % dwellStep !== 0 )
-		throw new Error("Invalid configuration (`dwell` must be a multiple of `dwellStep`).");
-
-	if( typeof ballColor !== "string" )
-		throw new Error("Invalid configuration (`ballColor` must be a string).");
-	if( !/^#[0-9a-f]{3}(?:[0-9a-f]{3})?/i.test(ballColor) )
-		throw new Error("Invalid configuration (`ballColor` must be a valid css color).");
-
-	if( typeof reversed !== "boolean" )
-		throw new Error("Invalid configuration (`reversed` must be a boolean).");
-
-}
-
-class Ball {
-      
-   constructor( color ){
-
-      this.position = { x: NaN, y: NaN };
-      this.color = color;
-      this.animationAt = 0;
-      this.animations = [];
-      this.elapsed = 0;
-
-   }
-
-   update( delta ){
-      
-      this.elapsed += delta;
-
-      const animation = this.animations[this.animationAt];
-      if( this.elapsed >= animation.duration ){
-         this.animationAt = (this.animationAt + 1) % this.animations.length;
-         this.elapsed = this.elapsed - animation.duration;
-         return this.update(0);
-      }
-
-      this.position = animation.getPosition(this.elapsed);
-
-   }
-
-   clear( context, settings ){
-
-      const { ballRadius, multiplier } = settings;
-
-      // Clear an additional 2px pixels of width to fix occasional subpixel trails.
-      const width = (ballRadius * multiplier + 2) * 2;
-      const x = this.position.x * multiplier - width / 2;
-      const y = this.position.y * multiplier - width / 2;
-      context.clearRect(x, y, width, width);
-
-   }
-
-   draw( context, settings ){
-
-      const radius = settings.ballRadius * settings.multiplier;
-      const x = this.position.x * settings.multiplier;
-      const y = this.position.y * settings.multiplier;
-      context.beginPath();
-      context.arc(x, y, radius, 0, Math.PI * 2);
-      context.fillStyle = this.color;
-      context.globalAlpha = this.position.y > 0 ? 0.9 : 0.55;
-      context.fill();
-      context.closePath();
-
-   }
-
-}
-
-class ThrowAnimation {
-	
-	constructor( duration, position, velocity, acceleration ){
-
-      this.duration = duration;
-
-		// Initial position and velocity.
-		this.position = position;
-		this.velocity = velocity;
-		this.acceleration = acceleration;
-
-	}
-
-   // Elapsed time from beginning of animation.
-	getPosition( time ){
-
-		const position = {
-			x: this.position.x + this.velocity.x * time,
-			y: this.position.y + this.velocity.y * time + this.acceleration.y * time * time * 0.5
-		};
-		return position;
-
-	}
-
-}
-
-// With a little help from http://www.lce.hut.fi/teaching/S-114.1100/lect_6.pdf :)
-
-class Polynomial {
-   
-   constructor( coefficients ){
-
-      this.coefficients = coefficients;
-
-   }
-
-   at( x ){
-
-      return this.coefficients.reduce( (result, current) => current + (x * result) );
-      
-   }
-
-   differentiate(){
-
-      return new Polynomial(this.coefficients.slice(0, -1).map((c, i, {length}) => (length - i) * c));
-
-   }
-
-}
-
-
-class Spline {
-   
-   constructor( points, endpoint1 = 0, endpoint2 = 0 ){
-
-      this.polynomials = [];
-      this.xs = points.map( ({x}) => x );
-      this.ys = points.map( ({y}) => y );
-
-      const n = this.xs.length;
-
-      const hs = [];
-      const qs = [];
-      const us = [];
-      const vs = [];
-      const zs = [];
-
-      for( let i = 0; i < n - 1; i++ ){
-         hs[i] = this.xs[i + 1] - this.xs[i];
-         qs[i] = (this.ys[i + 1] - this.ys[i]) / hs[i];
-      }
-
-      us[0] = 2 * (hs[0] + hs[1]);
-      vs[0] = 6 * (qs[1] - qs[0]);
-      for( let i = 1; i < n - 1; i++ ){
-         us[i] = 2 * (hs[i] + hs[i - 1]) - (hs[i - 1] * hs[i - 1] / us[i - 1]);
-         vs[i] = 6 * (qs[i] - qs[i - 1]) - (hs[i - 1] * vs[i - 1] / us[i - 1]);
-      }
-
-      zs[0] = endpoint1;
-      zs[n - 1] = endpoint2;
-      for( let i = n - 2; i > 0; i-- ){
-         zs[i] = (vs[i] - hs[i] * zs[i + 1]) / us[i];
-      }
-
-
-      for( let i = 0; i < n - 1; i++ ){
-         const d = this.ys[i];
-         const c = -(hs[i] * zs[i + 1] / 6) - (hs[i] * zs[i] / 3) + (this.ys[i + 1] - this.ys[i]) / hs[i];
-         const b = zs[i] / 2;
-         const a = (zs[i + 1] - zs[i]) / (6 * hs[i]);
-
-         this.polynomials.push( new Polynomial([a, b, c, d]) );
-      }
-
-   }
-
-   at( x ){
-
-      const xs = this.xs;
-      const n = this.polynomials.length;
-
-      const min = Math.min(xs[0], xs[n]);
-      const max = Math.max(xs[0], xs[n]);
-      if( x < min || x > max )
-         throw new Error("Out of bounds.");
-
-      let i = 0;
-      // Points going left to right.
-      if( xs[0] < xs[n] ){
-         while( i < n && x > xs[i + 1] )
-            i++;
-      }
-      // Or right to left.
-      else{
-         while( i < n && x < xs[i + 1] )
-            i++;
-      }
-
-      return this.polynomials[i].at(x - xs[i]);
-
-   }
-
-   maximum(){
-
-      const maximum = {
-         x: null,
-         y: null
-      };
-
-      const xs = this.xs;
-
-      for( let i = 0; i < this.polynomials.length; i++ ){
-
-         const der = this.polynomials[i].differentiate();
-
-         const a = der.coefficients[0];
-         const b = der.coefficients[1];
-         const c = der.coefficients[2];
-
-         // Then we find `x`s for which `f(x) = 0`.
-         const delta = Math.sqrt(b * b - 4 * a * c);
-         const x1 = (-b + delta) / (2 * a) + xs[i];
-         const x2 = (-b - delta) / (2 * a) + xs[i];
-
-         // Then we check if they are parts of visible intervals.
-         const min = Math.min(xs[i], xs[i + 1]);
-         const max = Math.max(xs[i], xs[i + 1]);
-
-         if( x1 >= min && x1 <= max ){
-            const y = this.at(x1);
-            if( y > maximum.y ){
-               maximum.x = x1;
-               maximum.y = y;
-            }
-         }
-         
-         if( x2 >= min && x2 <= max ){
-            const y = this.at(x2);
-            if( y > maximum.y ){
-               maximum.x = x2;
-               maximum.y = y;        
-            }
-         }
-
-      }
-
-      return maximum;
-
-   }
-
-}
-
-// All catch animations use the same spline for their trajectories.
-// This should probably be expanded to a few splines for different
-// types of throws (for example, to same vs to other hand).
-
-const points = [
-	{ x: 0,   y: 0   },
-	{ x: 5,   y: 30  },
-	{ x: 30,  y: 100 },
-	{ x: 95,  y: 30  },
-	{ x: 100, y: 0   }
-];
-
-const spline = new Spline(points);
-
-
-class CatchAnimation {
-
-	constructor( duration, x1, x2, height ){
-
-      this.duration = duration;
-		this.width = (x2 - x1);
-		this.yModifier = height / spline.maximum().y;
-		this.position = {
-			x: x1,
-			y: 0
-		};
-
-	}
-
-	getPosition( time ){
-
-      const percent = time / this.duration;
-		const position = {
-			x: this.position.x + percent * this.width,
-			y: this.position.y - spline.at(percent * 100) * this.yModifier
-		};
-		return position;
-
-	}
-
-}
-
-class WaitAnimation {
-
-	constructor( duration, x, y ){
-
-      this.duration = duration;
-		this.position = { x, y };
-
-	}
-
-	getPosition(){
-
-		return this.position;
-
-	}
-
-}
-
-// The `+ 0.00001` bit is taken from https://stackoverflow.com/questions/11832914/round-to-at-most-2-decimal-places-only-if-necessary
-// It seems to fix some rounding issues (like 1.005 => 1 instead of 1.01), 
-// but is "not foolproof for all numbers and it just works up to 3 d.p.".
-// Hopefully nothing will break.
-
-function round( float, precision = 1 ){
-
-	const tmp = Math.pow(10, precision);
-	return Math.round( (float + 0.00001) * tmp ) / tmp;
-
-}
-
-function lcm( a, b ){
-
-	const greater = Math.max(a, b);
-	const smaller = Math.min(a, b);
-	let result = greater;
-	while( result % smaller !== 0 )
-		result += greater;
-	return result;
-
-}
-
-const gravity = { x: 0, y: -9.81 / 1000 };
-
-
-// These are used to cache some computations and are essential for 
-// scaling and centering the animation. Reset on every `.prepare()`.
-
-let catchHeights = null;
-let throwHeights = null;
-let throwVelocities = null;
-
-function calcThrowVelocity( airTime, beatDuration ){
-
-	if( throwVelocities[airTime] === undefined )
-		throwVelocities[airTime] = Math.sqrt(2 * -gravity.y * calcThrowHeight(airTime, beatDuration));
-
-	return throwVelocities[airTime];
-
-}
-
-function calcThrowHeight( airTime, beatDuration ){
-
-	if( throwHeights[airTime] === undefined )
-		throwHeights[airTime] = -gravity.y / 8 * Math.pow(airTime * beatDuration, 2);
-	
-	return throwHeights[airTime];
-
-}
-
-function calcCatchHeight( value, beatDuration, dwell ){
-
-   if( catchHeights[value] === undefined ){
-
-      const bps = 1 / beatDuration;
-
-		// Higher throw means higher catch. 
-		const factor1 = value * 0.04;
-
-		// Greater speed means lower catch.
-		const factor2 = (3 - bps) * factor1 * 0.4;
-
-		// Greater dwell means higher catch.
-		const factor3 = (dwell - 0.5) * 0.5 * factor1 * 0.4;
-
-		catchHeights[value] = (factor1 + factor2 + factor3) * 1000;
-	}
-
-	return catchHeights[value];
-
-}
-
-
-// When dwell time is greater than a full beat and there are throw 
-// value(s) of 1, dwell time for that action has to be diminished
-// to `1 - dwellStep`.
-
-function normaliseDwellTime( dwellTime, dwellStep, multiplexes ){
-
-	if( dwellTime >= 1 ){
-		const ones = multiplexes.reduce( (sum, map) => Math.max(sum, map["1-0"] || 0, map["1-1"] || 0), 0);
-		if( ones > 0 )
-			return round(1 - dwellStep, 2);
-	}
-
-	return dwellTime;
-
-}
-
-
-// This one is used to synchronise tosses and releases when
-// there are multiplex twin tosses.
-
-function calcTimes( value, dwell, dwellStep, mpxPosition, mpxCount ){
-
-	const waitTime   = round((mpxCount - 1 - mpxPosition) * dwellStep, 2);
-	const launchTime = Math.max(dwellStep, round(dwell - (mpxCount - 1) * dwellStep, 2));
-	const airTime    = round(value - (waitTime + launchTime), 2);
-
-	return {
-		waitTime,
-		launchTime,
-		airTime
-	};
-
-}
-
-
-// Adjust the throw sequence of async patterns by changing the 
-// hand sequence from `l` to `l,r`. This should possibly be taken 
-// care of on the `Siteswap` level, after some careful devising 
-// (one problem being representing a 3 as 3l3r).
-
-// Thinking about this now, it actually might be best to simply 
-// convert async to sync ("3" -> "(6x,0)*") and provide an option 
-// here to consume that extra beat with the ball still in hand.
-// This raises the question of how would "522" behave? Will it 
-// consume the third beat?
-
-function strictifyThrows( siteswap ){
-
-	if( siteswap.degree === 2 ){
-		return siteswap.throws;
-	}
-
-	const throws = [];
-	const n = lcm( siteswap.throws.length, 2 );
-	for( let i = 0; i < n; i++ ){
-		const action = [[], []];
-		const release = siteswap.throws[i % siteswap.throws.length][0].map( toss => ({ value: toss.value, handFrom: i % 2, handTo: (i + toss.value) % 2 }) );
-		action[i % 2] = release;
-		throws.push( action );
-	}
-
-	return throws;
-
-}
-
-
-
-// Assign the appropriate animations to balls, which are looped over in `Ball.prototype.update`.
-
-function prepare(){
-
-	const siteswap = this.siteswap;
-	const settings = this.settings;
-
-	this.balls = Array(siteswap.props).fill().map( () => new Ball(settings.ballColor) );
-
-	// Reset cache.
-	catchHeights = {};
-	throwHeights = {};
-	throwVelocities = {};
-
-	const beatDuration = settings.beatDuration;
-	const catchWidth = settings.catchWidth;
-	const innerWidth = settings.catchWidth * 2 + settings.handsGap;
-
-	const throws = strictifyThrows(siteswap);
-	const n = lcm( throws.length, siteswap.strictStates.length );
-	for( let i = 0; i < n; i++ ){
-
-		const action = throws[i % throws.length];
-		const schedule = siteswap.strictStates[i % siteswap.strictStates.length].schedule;
-
-		// Determine greatest multiplex count of same throw values. This has to include both hands
-		// (if used) as throws happen at the same time, even if one hand has no multiplex tosses.
-		// `([553])` => [{ '5-0': 2, '3-0': 1 }]
-		const multiplexes = action.map(function(release){
-			return release.reduce(function(result, toss){
-				const key = `${toss.value}-${toss.handTo}`;
-				result[key] = (result[key] || 0) + 1;
-				return result;
-			}, {});
-		});
-
-
-		const greatestTwinCount = Math.max( ...multiplexes.map(group => Math.max(...Object.keys(group).map(key => group[key])) ));
-		const dwellTime = normaliseDwellTime(settings.dwell, settings.dwellStep, multiplexes);
-
-		for( let h = 0; h < 2; h++ ){
-
-			const release = action[h];
-
-			// "Hand motion" follows the lowest toss when multiplexing.
-			const lowestValue = Math.min( ...release.map(({value}) => value) );
-
-			for( let j = 0; j < release.length; j++ ){
-
-				const toss = release[j];
-				if( toss.value === 0 )
-					continue;
-					
-				const ball = this.balls[ schedule[h % siteswap.degree][0][j] - 1 ];
-
-				const { waitTime, launchTime, airTime } = calcTimes(toss.value, dwellTime, settings.dwellStep, --multiplexes[h][toss.value + "-" + toss.handTo], greatestTwinCount);
-				
-				
-				// Catch animation.
-				{
-				let x1 = toss.handFrom === 0 ? 0 : innerWidth;
-				let x2 = toss.handFrom === 0 ? catchWidth : innerWidth - catchWidth;
-
-				if( settings.reversed )
-					[x1, x2] = [x2, x1];
-
-				const height = calcCatchHeight( lowestValue, beatDuration, dwellTime );
-				ball.animations.push( new CatchAnimation(launchTime * beatDuration, x1, x2, height) );
-				}
-
-
-				// Throw animation.
-				{
-				let x1 = toss.handFrom === 0 ? catchWidth : innerWidth - catchWidth;
-				let x2 = toss.handTo === 0 ? 0 : innerWidth;
-
-				if( settings.reversed ){
-
-					if( toss.handFrom === toss.handTo ){
-						[x1, x2] = [x2, x1];
-					}
-					else{
-						x1 += toss.handFrom === 0 ? -catchWidth : catchWidth;
-						x2 += toss.handFrom === 0 ? -catchWidth : catchWidth;
-					}
-
-				}
-
-				const position = {
-					x: x1,
-					y: 0
-				};
-
-				const velocity = {
-					x: (x2 - x1) / (airTime * beatDuration),
-					y: calcThrowVelocity(airTime, beatDuration)
-				};
-
-				ball.animations.push( new ThrowAnimation(airTime * beatDuration, position, velocity, gravity) );
-
-				// Wait animation.
-				if( waitTime > 0 ){
-					ball.animations.push( new WaitAnimation(waitTime * beatDuration, x2, 0) );
-				}
-					
-				}
-			}
-		}
-	}
-
-	// Once the throw/catch heights in metres are known, we can assign `innerWidth` 
-	// and `innerHeight` which will be used for scaling and centering.
-	const greatestThrowHeight = Math.max( ...Object.keys(throwHeights).map(key => throwHeights[key]) );
-	const greatestCatchHeight = Math.max( ...Object.keys(catchHeights).map(key => catchHeights[key]) );
-	const innerHeight = greatestThrowHeight + greatestCatchHeight;
-
-	this.scale(innerWidth, innerHeight, greatestCatchHeight);
-
-
-
-   // Delay initial animations.
-   const schedule = siteswap.strictStates[0].schedule;
-   for( const state of schedule ){
-      for( let beat = 0; beat < state.length; beat++ ){
-         for( const id of state[beat] ){
-            this.balls[id - 1].animations[-1] = new WaitAnimation(beat * beatDuration);
-            this.balls[id - 1].animationAt = -1;
-         }
-      }
-   }
-
-
-}
-
 function createCommonjsModule(fn, module) {
 	return module = { exports: {} }, fn(module, module.exports), module.exports;
 }
@@ -2557,6 +1845,67 @@ module.exports = Siteswap;
 return module.exports;});
 });
 
+const _settings$1 = Symbol.for("settings");
+ 
+ 
+function configure( options ){
+
+   const settings = this[_settings$1];
+
+   if( options.beatDuration !== undefined )
+      settings.beatDuration = options.beatDuration;
+
+	if( options.slowdown !== undefined )
+		settings.slowdown = options.slowdown;
+
+	if( options.dwell !== undefined )
+		settings.dwell = options.dwell;
+
+	if( options.dwellStep !== undefined )
+		settings.dwellStep = options.dwellStep;
+
+	if( options.ballColor !== undefined )
+		settings.ballColor = options.ballColor;
+
+	if( options.reversed !== undefined )
+		settings.reversed = options.reversed;
+
+	// Get the unaffected _dwell value.
+	const { beatDuration, _dwell: dwell, dwellStep, slowdown, ballColor, reversed } = settings;
+
+   if( typeof beatDuration !== "number" )
+      throw new Error("Invalid configuration (`beatDuration` must be a number).");
+   if( beatDuration <= 0 )
+      throw new Error("Invalid configuration (`beatDuration` must be positive).");
+
+	if( typeof slowdown !== "number" )
+		throw new Error("Invalid configuration (`slowdown` must be a number).");
+	if( slowdown <= 0 )
+		throw new Error("Invalid configuration (`slowdown` must be positive).");
+
+	if( typeof dwell !== "number" )
+		throw new Error("Invalid configuration (`dwell` must be a number).");
+	if( dwell < 0 || dwell > 1 )
+		throw new Error("Invalid configuration (`dwell` must be in [0-1] range).");
+	if( typeof dwellStep !== "number" )
+		throw new Error("Invalid configuration (`dwellStep` must be a number).");
+	if( dwellStep <= 0 )
+		throw new Error("Invalid configuration (`dwellStep` must be positive).");
+	if( dwellStep > dwell )
+		throw new Error("Invalid configuration (`dwellStep` can't be greater than `dwell`).");
+	if( dwell % dwellStep !== 0 )
+		throw new Error("Invalid configuration (`dwell` must be a multiple of `dwellStep`).");
+
+	if( typeof ballColor !== "string" )
+		throw new Error("Invalid configuration (`ballColor` must be a string).");
+	if( !/^#[0-9a-f]{3}(?:[0-9a-f]{3})?/i.test(ballColor) )
+		throw new Error("Invalid configuration (`ballColor` must be a valid css color).");
+
+	if( typeof reversed !== "boolean" )
+		throw new Error("Invalid configuration (`reversed` must be a boolean).");
+
+}
+
 class Loop {
       
    constructor( callback ){
@@ -2564,13 +1913,13 @@ class Loop {
       this.callback  = callback;
       this.update    = this.update.bind(this);
       this.request   = window.requestAnimationFrame(this.update);
-      this.timestamp = 0;
+      this.timestamp = null;
 
    }
 
    update( now ){
 
-      const delta = now - this.timestamp;
+      const delta = this.timestamp ? now - this.timestamp : 0;
       this.timestamp = now;
       this.request = window.requestAnimationFrame(this.update);
       this.callback(delta);
@@ -2585,10 +1934,673 @@ class Loop {
 
 }
 
+class Ball {
+      
+   constructor( color ){
+
+      this.position = { x: NaN, y: NaN };
+      this.color = color;
+      this.animationAt = 0;
+      this.animations = [];
+      this.elapsed = 0;
+
+   }
+
+   update( delta ){
+      
+      this.elapsed += delta;
+
+      const animation = this.animations[this.animationAt];
+      if( this.elapsed >= animation.duration ){
+         this.animationAt = (this.animationAt + 1) % this.animations.length;
+         this.elapsed = this.elapsed - animation.duration;
+         return this.update(0);
+      }
+
+      this.position = animation.getPosition(this.elapsed);
+
+   }
+
+   clear( context, settings ){
+
+      const { ballRadius, multiplier } = settings;
+
+      // Clear an additional 2px pixels of width to fix occasional subpixel trails.
+      const width = (ballRadius * multiplier + 2) * 2;
+      const x = this.position.x * multiplier - width / 2;
+      const y = this.position.y * multiplier - width / 2;
+      context.clearRect(x, y, width, width);
+
+   }
+
+   draw( context, settings ){
+
+      const radius = settings.ballRadius * settings.multiplier;
+      const x = this.position.x * settings.multiplier;
+      const y = this.position.y * settings.multiplier;
+      context.beginPath();
+      context.arc(x, y, radius, 0, Math.PI * 2);
+      context.fillStyle = this.color;
+      context.globalAlpha = this.position.y > 0 ? 0.9 : 0.55;
+      context.fill();
+      context.closePath();
+
+   }
+
+}
+
+class ThrowAnimation {
+	
+	constructor( duration, position, velocity, acceleration ){
+
+      this.duration = duration;
+
+		// Initial position and velocity.
+		this.position = position;
+		this.velocity = velocity;
+		this.acceleration = acceleration;
+
+	}
+
+   // Elapsed time from beginning of animation.
+	getPosition( time ){
+
+		const position = {
+			x: this.position.x + this.velocity.x * time,
+			y: this.position.y + this.velocity.y * time + this.acceleration.y * time * time * 0.5
+		};
+		return position;
+
+	}
+
+}
+
+// With a little help from http://www.lce.hut.fi/teaching/S-114.1100/lect_6.pdf :)
+
+class Polynomial {
+   
+   constructor( coefficients ){
+
+      this.coefficients = coefficients;
+
+   }
+
+   at( x ){
+
+      return this.coefficients.reduce( (result, current) => current + (x * result) );
+      
+   }
+
+   differentiate(){
+
+      return new Polynomial(this.coefficients.slice(0, -1).map((c, i, {length}) => (length - i) * c));
+
+   }
+
+}
+
+
+class Spline {
+   
+   constructor( points, endpoint1 = 0, endpoint2 = 0 ){
+
+      this.polynomials = [];
+      this.xs = points.map( ({x}) => x );
+      this.ys = points.map( ({y}) => y );
+
+      const n = this.xs.length;
+
+      const hs = [];
+      const qs = [];
+      const us = [];
+      const vs = [];
+      const zs = [];
+
+      for( let i = 0; i < n - 1; i++ ){
+         hs[i] = this.xs[i + 1] - this.xs[i];
+         qs[i] = (this.ys[i + 1] - this.ys[i]) / hs[i];
+      }
+
+      us[0] = 2 * (hs[0] + hs[1]);
+      vs[0] = 6 * (qs[1] - qs[0]);
+      for( let i = 1; i < n - 1; i++ ){
+         us[i] = 2 * (hs[i] + hs[i - 1]) - (hs[i - 1] * hs[i - 1] / us[i - 1]);
+         vs[i] = 6 * (qs[i] - qs[i - 1]) - (hs[i - 1] * vs[i - 1] / us[i - 1]);
+      }
+
+      zs[0] = endpoint1;
+      zs[n - 1] = endpoint2;
+      for( let i = n - 2; i > 0; i-- ){
+         zs[i] = (vs[i] - hs[i] * zs[i + 1]) / us[i];
+      }
+
+
+      for( let i = 0; i < n - 1; i++ ){
+         const d = this.ys[i];
+         const c = -(hs[i] * zs[i + 1] / 6) - (hs[i] * zs[i] / 3) + (this.ys[i + 1] - this.ys[i]) / hs[i];
+         const b = zs[i] / 2;
+         const a = (zs[i + 1] - zs[i]) / (6 * hs[i]);
+
+         this.polynomials.push( new Polynomial([a, b, c, d]) );
+      }
+
+   }
+
+   at( x ){
+
+      const xs = this.xs;
+      const n = this.polynomials.length;
+
+      const min = Math.min(xs[0], xs[n]);
+      const max = Math.max(xs[0], xs[n]);
+      if( x < min || x > max )
+         throw new Error("Out of bounds.");
+
+      let i = 0;
+      // Points going left to right.
+      if( xs[0] < xs[n] ){
+         while( i < n && x > xs[i + 1] )
+            i++;
+      }
+      // Or right to left.
+      else{
+         while( i < n && x < xs[i + 1] )
+            i++;
+      }
+
+      return this.polynomials[i].at(x - xs[i]);
+
+   }
+
+   maximum(){
+
+      const maximum = {
+         x: null,
+         y: null
+      };
+
+      const xs = this.xs;
+
+      for( let i = 0; i < this.polynomials.length; i++ ){
+
+         const der = this.polynomials[i].differentiate();
+
+         const a = der.coefficients[0];
+         const b = der.coefficients[1];
+         const c = der.coefficients[2];
+
+         // Then we find `x`s for which `f(x) = 0`.
+         const delta = Math.sqrt(b * b - 4 * a * c);
+         const x1 = (-b + delta) / (2 * a) + xs[i];
+         const x2 = (-b - delta) / (2 * a) + xs[i];
+
+         // Then we check if they are parts of visible intervals.
+         const min = Math.min(xs[i], xs[i + 1]);
+         const max = Math.max(xs[i], xs[i + 1]);
+
+         if( x1 >= min && x1 <= max ){
+            const y = this.at(x1);
+            if( y > maximum.y ){
+               maximum.x = x1;
+               maximum.y = y;
+            }
+         }
+         
+         if( x2 >= min && x2 <= max ){
+            const y = this.at(x2);
+            if( y > maximum.y ){
+               maximum.x = x2;
+               maximum.y = y;        
+            }
+         }
+
+      }
+
+      return maximum;
+
+   }
+
+}
+
+// All catch animations use the same spline for their trajectories.
+// This should probably be expanded to a few splines for different
+// types of throws (for example, to same vs to other hand).
+
+const points = [
+	{ x: 0,   y: 0   },
+	{ x: 5,   y: 30  },
+	{ x: 30,  y: 100 },
+	{ x: 95,  y: 30  },
+	{ x: 100, y: 0   }
+];
+
+const spline = new Spline(points);
+
+
+class CatchAnimation {
+
+	constructor( duration, x1, x2, height ){
+
+      this.duration = duration;
+		this.width = (x2 - x1);
+		this.yModifier = height / spline.maximum().y;
+		this.position = {
+			x: x1,
+			y: 0
+		};
+
+	}
+
+	getPosition( time ){
+
+      const percent = time / this.duration;
+		const position = {
+			x: this.position.x + percent * this.width,
+			y: this.position.y - spline.at(percent * 100) * this.yModifier
+		};
+		return position;
+
+	}
+
+}
+
+class WaitAnimation {
+
+	constructor( duration, x, y ){
+
+      this.duration = duration;
+		this.position = { x, y };
+
+	}
+
+	getPosition(){
+
+		return this.position;
+
+	}
+
+}
+
+const _settings$4 = Symbol.for("settings");
+
+// Resizes the canvas, scales and centers animation. Optionally, the sizes in metres can be
+// set (happens in `.prepare()` when the animations are calculated).
+
+function scale( animator, width, height, catchHeight ){
+
+   const context = animator.context;
+	const canvas = context.canvas;
+	const settings = animator[_settings$4];
+
+	// Set new inner size, in metres.
+	if( width && height && catchHeight ){
+		settings.innerWidth = width;
+		settings.innerHeight = height;
+		settings.catchHeight = catchHeight;
+	}
+
+	// Set new canvas size.
+	canvas.width = canvas.clientWidth;
+	canvas.height = canvas.clientHeight;
+
+	// Convert metres to pixels.
+	settings.multiplier = Math.max(0, Math.min(
+		canvas.width / (settings.innerWidth + settings.ballRadius * 2),
+		canvas.height / (settings.innerHeight + settings.ballRadius * 2)
+	));
+
+	// Center the animation by translating the canvas. This adjusts for the internal y-origin that
+	// matches catch height and the required offset of one screen as y axis will be inverted.
+	const surplus = {
+		x: Math.max(0, canvas.clientWidth - (settings.innerWidth + settings.ballRadius * 2) * settings.multiplier),
+		y: Math.max(0, canvas.clientHeight - (settings.innerHeight + settings.ballRadius * 2) * settings.multiplier)
+	};
+	const offset = {
+		x: surplus.x * 0.5 + settings.ballRadius * settings.multiplier,
+		y: surplus.y * 0.5 + settings.ballRadius * settings.multiplier
+	};
+
+
+	context.translate(offset.x, canvas.height - offset.y - settings.catchHeight * settings.multiplier);
+	
+	// Invert y axis.
+	context.scale(1, -1);
+
+}
+
+// The `+ 0.00001` bit is taken from https://stackoverflow.com/questions/11832914/round-to-at-most-2-decimal-places-only-if-necessary
+// It seems to fix some rounding issues (like 1.005 => 1 instead of 1.01), 
+// but is "not foolproof for all numbers and it just works up to 3 d.p.".
+// Hopefully nothing will break.
+
+function round( float, precision = 1 ){
+
+	const tmp = Math.pow(10, precision);
+	return Math.round( (float + 0.00001) * tmp ) / tmp;
+
+}
+
+function lcm( a, b ){
+
+	const greater = Math.max(a, b);
+	const smaller = Math.min(a, b);
+	let result = greater;
+	while( result % smaller !== 0 )
+		result += greater;
+	return result;
+
+}
+
+const _settings$3 = Symbol.for("settings");
+const _balls$2 = Symbol.for("balls");
+ 
+
+
+
+const gravity = { x: 0, y: -9.81 / 1000 };
+
+
+// These are used to cache some computations and are essential for 
+// scaling and centering the animation. Reset on every `.prepare()`.
+
+let catchHeights = null;
+let throwHeights = null;
+let throwVelocities = null;
+
+function calcThrowVelocity( airTime, beatDuration ){
+
+	if( throwVelocities[airTime] === undefined )
+		throwVelocities[airTime] = Math.sqrt(2 * -gravity.y * calcThrowHeight(airTime, beatDuration));
+
+	return throwVelocities[airTime];
+
+}
+
+function calcThrowHeight( airTime, beatDuration ){
+
+	if( throwHeights[airTime] === undefined )
+		throwHeights[airTime] = -gravity.y / 8 * Math.pow(airTime * beatDuration, 2);
+	
+	return throwHeights[airTime];
+
+}
+
+function calcCatchHeight( value, beatDuration, dwell ){
+
+   if( catchHeights[value] === undefined ){
+
+      const bps = 1 / beatDuration;
+
+		// Higher throw means higher catch. 
+		const factor1 = value * 0.04;
+
+		// Greater speed means lower catch.
+		const factor2 = (3 - bps) * factor1 * 0.4;
+
+		// Greater dwell means higher catch.
+		const factor3 = (dwell - 0.5) * 0.5 * factor1 * 0.4;
+
+		catchHeights[value] = (factor1 + factor2 + factor3) * 1000;
+	}
+
+	return catchHeights[value];
+
+}
+
+
+// When dwell time is greater than a full beat and there are throw 
+// value(s) of 1, dwell time for that action has to be diminished
+// to `1 - dwellStep`.
+
+function normaliseDwellTime( dwellTime, dwellStep, multiplexes ){
+
+	if( dwellTime >= 1 ){
+		const ones = multiplexes.reduce( (sum, map) => Math.max(sum, map["1-0"] || 0, map["1-1"] || 0), 0);
+		if( ones > 0 )
+			return round(1 - dwellStep, 2);
+	}
+
+	return dwellTime;
+
+}
+
+
+// This one is used to synchronise tosses and releases when
+// there are multiplex twin tosses.
+
+function calcTimes( value, dwell, dwellStep, mpxPosition, mpxCount ){
+
+	const waitTime   = round((mpxCount - 1 - mpxPosition) * dwellStep, 2);
+	const launchTime = Math.max(dwellStep, round(dwell - (mpxCount - 1) * dwellStep, 2));
+	const airTime    = round(value - (waitTime + launchTime), 2);
+
+	return {
+		waitTime,
+		launchTime,
+		airTime
+	};
+
+}
+
+
+// Adjust the throw sequence of async patterns by changing the 
+// hand sequence from `l` to `l,r`. This should possibly be taken 
+// care of on the `Siteswap` level, after some careful devising 
+// (one problem being representing a 3 as 3l3r).
+
+// Thinking about this now, it actually might be best to simply 
+// convert async to sync ("3" -> "(6x,0)*") and provide an option 
+// here to consume that extra beat with the ball still in hand.
+// This raises the question of how would "522" behave? Will it 
+// consume the third beat?
+
+function strictifyThrows( siteswap ){
+
+	if( siteswap.degree === 2 ){
+		return siteswap.throws;
+	}
+
+	const throws = [];
+	const n = lcm( siteswap.throws.length, 2 );
+	for( let i = 0; i < n; i++ ){
+		const action = [[], []];
+		const release = siteswap.throws[i % siteswap.throws.length][0].map( toss => ({ value: toss.value, handFrom: i % 2, handTo: (i + toss.value) % 2 }) );
+		action[i % 2] = release;
+		throws.push( action );
+	}
+
+	return throws;
+
+}
+
+
+
+// Assign the appropriate animations to balls, which are looped over in `Ball.prototype.update`.
+
+function prepare( animator ){
+
+	const siteswap = animator.siteswap;
+	const settings = animator[_settings$3];
+
+   const balls = Array(siteswap.props).fill().map( () => new Ball(settings.ballColor) );
+	animator[_balls$2] = balls;
+
+	// Reset cache.
+	catchHeights = {};
+	throwHeights = {};
+	throwVelocities = {};
+
+	const beatDuration = settings.beatDuration;
+	const catchWidth = settings.catchWidth;
+	const innerWidth = settings.catchWidth * 2 + settings.handsGap;
+
+	const throws = strictifyThrows(siteswap);
+	const n = lcm( throws.length, siteswap.strictStates.length );
+	for( let i = 0; i < n; i++ ){
+
+		const action = throws[i % throws.length];
+		const schedule = siteswap.strictStates[i % siteswap.strictStates.length].schedule;
+
+		// Determine greatest multiplex count of same throw values. This has to include both hands
+		// (if used) as throws happen at the same time, even if one hand has no multiplex tosses.
+		// `([553])` => [{ '5-0': 2, '3-0': 1 }]
+		const multiplexes = action.map(function(release){
+			return release.reduce(function(result, toss){
+				const key = `${toss.value}-${toss.handTo}`;
+				result[key] = (result[key] || 0) + 1;
+				return result;
+			}, {});
+		});
+
+
+		const greatestTwinCount = Math.max( ...multiplexes.map(group => Math.max(...Object.keys(group).map(key => group[key])) ));
+		const dwellTime = normaliseDwellTime(settings.dwell, settings.dwellStep, multiplexes);
+
+		for( let h = 0; h < 2; h++ ){
+
+			const release = action[h];
+
+			// "Hand motion" follows the lowest toss when multiplexing.
+			const lowestValue = Math.min( ...release.map(({value}) => value) );
+
+			for( let j = 0; j < release.length; j++ ){
+
+				const toss = release[j];
+				if( toss.value === 0 )
+					continue;
+					
+				const ball = balls[ schedule[h % siteswap.degree][0][j] - 1 ];
+
+				const { waitTime, launchTime, airTime } = calcTimes(toss.value, dwellTime, settings.dwellStep, --multiplexes[h][toss.value + "-" + toss.handTo], greatestTwinCount);
+				
+				
+				// Catch animation.
+				{
+				let x1 = toss.handFrom === 0 ? 0 : innerWidth;
+				let x2 = toss.handFrom === 0 ? catchWidth : innerWidth - catchWidth;
+
+				if( settings.reversed )
+					[x1, x2] = [x2, x1];
+
+				const height = calcCatchHeight( lowestValue, beatDuration, dwellTime );
+				ball.animations.push( new CatchAnimation(launchTime * beatDuration, x1, x2, height) );
+				}
+
+
+				// Throw animation.
+				{
+				let x1 = toss.handFrom === 0 ? catchWidth : innerWidth - catchWidth;
+				let x2 = toss.handTo === 0 ? 0 : innerWidth;
+
+				if( settings.reversed ){
+
+					if( toss.handFrom === toss.handTo ){
+						[x1, x2] = [x2, x1];
+					}
+					else{
+						x1 += toss.handFrom === 0 ? -catchWidth : catchWidth;
+						x2 += toss.handFrom === 0 ? -catchWidth : catchWidth;
+					}
+
+				}
+
+				const position = {
+					x: x1,
+					y: 0
+				};
+
+				const velocity = {
+					x: (x2 - x1) / (airTime * beatDuration),
+					y: calcThrowVelocity(airTime, beatDuration)
+				};
+
+				ball.animations.push( new ThrowAnimation(airTime * beatDuration, position, velocity, gravity) );
+
+				// Wait animation.
+				if( waitTime > 0 ){
+					ball.animations.push( new WaitAnimation(waitTime * beatDuration, x2, 0) );
+				}
+					
+				}
+			}
+		}
+	}
+
+	// Once the throw/catch heights in metres are known, we can assign `innerWidth` 
+	// and `innerHeight` which will be used for scaling and centering.
+	const greatestThrowHeight = Math.max( ...Object.keys(throwHeights).map(key => throwHeights[key]) );
+	const greatestCatchHeight = Math.max( ...Object.keys(catchHeights).map(key => catchHeights[key]) );
+	const innerHeight = greatestThrowHeight + greatestCatchHeight;
+
+	scale(animator, innerWidth, innerHeight, greatestCatchHeight);
+
+
+
+   // Delay initial animations.
+   const schedule = siteswap.strictStates[0].schedule;
+   for( const state of schedule ){
+      for( let beat = 0; beat < state.length; beat++ ){
+         for( const id of state[beat] ){
+            balls[id - 1].animations[-1] = new WaitAnimation(beat * beatDuration);
+            balls[id - 1].animationAt = -1;
+         }
+      }
+   }
+
+
+}
+
+const _settings$5 = Symbol.for("settings");
+const _paused$2 = Symbol.for("paused");
+const _balls$3 = Symbol.for("balls");
+
+
+function update( animator, delta ){
+
+   const context = animator.context;
+   const canvas = context.canvas;
+   const settings = animator[_settings$5];
+   const balls = animator[_balls$3];
+   const paused = animator[_paused$2];
+
+	// Canvas size changed, rescale animation.
+	if( canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight ){
+		scale(animator);
+
+      // If paused stuff won't redraw, that's why.
+		if( paused ){
+         for( const ball of balls )
+            ball.draw(context, settings);
+      }
+
+	}
+	
+	if( paused ){
+		return;
+	}
+
+   // Update ball positions.
+   for( const ball of balls ){
+      ball.clear(context, settings);
+   }
+
+   for( const ball of balls ){
+      ball.update(delta / settings.slowdown);   
+      ball.draw(context, settings);
+   }
+
+}
+
+const _settings$2 = Symbol.for("settings");
+const _paused$1 = Symbol.for("paused");
+const _loop$1 = Symbol.for("loop");
+
+
+
 function start( siteswap$$1, notation ){
 
 	// Already running.
-	if( this.loop ){
+	if( this[_loop$1] ){
 		this.stop();
 	}
 
@@ -2609,21 +2621,22 @@ function start( siteswap$$1, notation ){
 		return;
 	}
 
-	if( !validMultiplexTwins(siteswap$$1, this.settings.multiplexTwinLimit)){
+   const settings = this[_settings$2];
+
+	if( !validMultiplexTwins(siteswap$$1, settings.multiplexTwinLimit)){
 		throw new Error("Multiplex twin limit exceeded.");
 	}
 
 	// Populate balls and scale the animation.
-	this.prepare();
+	prepare(this);
 
-	if( this.settings.ballRadius * this.settings.multiplier * 2  <  this.settings.ballRadiusLimit ){
+	if( settings.ballRadius * settings.multiplier * 2  <  settings.ballRadiusLimit ){
 		throw new Error("Balls too small for this screen.");
 	}
 
-   const update = this.constructor.prototype.update.bind(this);
 
-	this.paused = false;
-   this.loop = new Loop(update);
+	this[_paused$1] = false;
+   this[_loop$1] = new Loop( delta => update(this, delta) );
 
 }
 
@@ -2648,29 +2661,77 @@ function validMultiplexTwins( siteswap$$1, multiplexTwinLimit ){
 
 }
 
+const _settings$6  = Symbol.for("settings");
+const _balls$4 = Symbol.for("balls");
+const _loop$2  = Symbol.for("loop");
+
+
+function stop(){
+
+   const loop = this[_loop$2];
+   if( !loop )
+      return;
+
+   const balls = this[_balls$4];
+   const settings = this[_settings$6];
+
+   for( const ball of balls )
+      ball.clear(this.context, settings);
+   
+   loop.kill();
+   this[_loop$2] = null;
+   this.siteswap = null;
+   balls.length = 0;
+
+}
+
+const _paused$3 = Symbol.for("paused");
+
+function pause(){
+
+	this[_paused$3] = !this[_paused$3];
+
+}
+
+const _settings$7 = Symbol.for("settings");
+const _paused$4 = Symbol.for("paused");
+const _balls$5 = Symbol.for("balls");
+ 
+
 // `id` is an integer assigned to balls (in order of appearance?).
 
 function dye( color, id ){
 
+   const balls = this[_balls$5];
+   const settings = this[_settings$7];
+   const context = this.context;
+
 	if( id === undefined ){
-		for( const ball of this.balls )
+		for( const ball of balls )
 			ball.color = color;
 	}
 	else{
-		if( !this.balls[id] )
+		if( !balls[id] )
 			throw new Error("Ball doesn't exist.");
-		this.balls[id].color = color;
+		balls[id].color = color;
 	}
 	
 
-	if( this.paused ){
-	   for( const ball of this.balls )
-	      ball.clear(this.context, this.settings);
-	   for( const ball of this.balls )
-	      ball.draw(this.context, this.settings);
+	if( this[_paused$4] ){
+	   for( const ball of balls )
+	      ball.clear(context, settings);
+	   for( const ball of balls )
+	      ball.draw(context, settings);
 	}
 
 }
+
+const _settings = Symbol.for("settings");
+const _paused = Symbol.for("paused");
+const _balls = Symbol.for("balls");
+const _loop = Symbol.for("loop");
+
+
 
 class Animator {
 
@@ -2680,20 +2741,20 @@ class Animator {
 		if( !element )
 			throw new Error("Canvas element not supplied.")
 
-		element.addEventListener("click", this.pause.bind(this));
+		element.addEventListener("click", () => this.pause());
 
 
-		this.context  = element.getContext("2d");
-		this.loop     = null;
-		this.paused   = false;
-		
-		this.siteswap = null;
-		this.balls    = [];
+      this.context  = element.getContext("2d");
+      this.siteswap = null;
 
+      this[_loop]     = null;
+      this[_paused]   = false;
+      this[_balls]    = [];
+      
 
 		// Default settings.
 		const animator = this;
-		this.settings = {
+		this[_settings] = {
 
          // Configurable by `this.configure`.
          _dwell: 0.5,             // Affected by siteswap synchronicity and slowdown. Getter below.
@@ -2739,12 +2800,9 @@ class Animator {
 }
 
 Animator.prototype.start     = start;
-Animator.prototype.pause     = pause;
 Animator.prototype.stop      = stop;
-Animator.prototype.scale     = scale;
-Animator.prototype.update    = update;
+Animator.prototype.pause     = pause;
 Animator.prototype.configure = configure;
-Animator.prototype.prepare   = prepare;
 Animator.prototype.dye       = dye;
 
 return Animator;

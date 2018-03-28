@@ -1,10 +1,18 @@
 
 import { Ball }            from "./Ball";
-import { ThrowAnimation }  from "./Animator.prepare.ThrowAnimation";
-import { CatchAnimation }  from "./Animator.prepare.CatchAnimation";
-import { WaitAnimation }   from "./Animator.prepare.WaitAnimation";
+import { ThrowAnimation }  from "./animationThrow";
+import { CatchAnimation }  from "./animationCatch";
+import { WaitAnimation }   from "./animationWait";
+import { scale }           from "./scale";
 import { round }           from "./round";
 import { lcm }             from "./lcm";
+
+
+ 
+const _settings = Symbol.for("settings")
+const _balls = Symbol.for("balls")
+ 
+
 
 
 const gravity = { x: 0, y: -9.81 / 1000 };
@@ -127,12 +135,13 @@ function strictifyThrows( siteswap ){
 
 // Assign the appropriate animations to balls, which are looped over in `Ball.prototype.update`.
 
-function prepare(){
+function prepare( animator ){
 
-	const siteswap = this.siteswap;
-	const settings = this.settings;
+	const siteswap = animator.siteswap;
+	const settings = animator[_settings];
 
-	this.balls = Array(siteswap.props).fill().map( () => new Ball(settings.ballColor) );
+   const balls = Array(siteswap.props).fill().map( () => new Ball(settings.ballColor) );
+	animator[_balls] = balls;
 
 	// Reset cache.
 	catchHeights = {};
@@ -178,7 +187,7 @@ function prepare(){
 				if( toss.value === 0 )
 					continue;
 					
-				const ball = this.balls[ schedule[h % siteswap.degree][0][j] - 1 ];
+				const ball = balls[ schedule[h % siteswap.degree][0][j] - 1 ];
 
 				const { waitTime, launchTime, airTime } = calcTimes(toss.value, dwellTime, settings.dwellStep, --multiplexes[h][toss.value + "-" + toss.handTo], greatestTwinCount);
 				
@@ -241,7 +250,7 @@ function prepare(){
 	const greatestCatchHeight = Math.max( ...Object.keys(catchHeights).map(key => catchHeights[key]) );
 	const innerHeight = greatestThrowHeight + greatestCatchHeight;
 
-	this.scale(innerWidth, innerHeight, greatestCatchHeight);
+	scale(animator, innerWidth, innerHeight, greatestCatchHeight);
 
 
 
@@ -250,8 +259,8 @@ function prepare(){
    for( const state of schedule ){
       for( let beat = 0; beat < state.length; beat++ ){
          for( const id of state[beat] ){
-            this.balls[id - 1].animations[-1] = new WaitAnimation(beat * beatDuration)
-            this.balls[id - 1].animationAt = -1
+            balls[id - 1].animations[-1] = new WaitAnimation(beat * beatDuration)
+            balls[id - 1].animationAt = -1
          }
       }
    }

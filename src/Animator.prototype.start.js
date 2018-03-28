@@ -1,11 +1,20 @@
-
 import Siteswap from "siteswap.js";
 import { Loop } from "./Loop";
+import { prepare } from "./prepare";
+import { update }  from "./update";
+ 
+
+const _settings = Symbol.for("settings")
+const _paused = Symbol.for("paused")
+const _balls = Symbol.for("balls")
+const _loop = Symbol.for("loop")
+
+
 
 function start( siteswap, notation ){
 
 	// Already running.
-	if( this.loop ){
+	if( this[_loop] ){
 		this.stop();
 	}
 
@@ -26,21 +35,22 @@ function start( siteswap, notation ){
 		return;
 	}
 
-	if( !validMultiplexTwins(siteswap, this.settings.multiplexTwinLimit)){
+   const settings = this[_settings];
+
+	if( !validMultiplexTwins(siteswap, settings.multiplexTwinLimit)){
 		throw new Error("Multiplex twin limit exceeded.");
 	}
 
 	// Populate balls and scale the animation.
-	this.prepare();
+	prepare(this);
 
-	if( this.settings.ballRadius * this.settings.multiplier * 2  <  this.settings.ballRadiusLimit ){
+	if( settings.ballRadius * settings.multiplier * 2  <  settings.ballRadiusLimit ){
 		throw new Error("Balls too small for this screen.");
 	}
 
-   const update = this.constructor.prototype.update.bind(this)
 
-	this.paused = false;
-   this.loop = new Loop(update);
+	this[_paused] = false;
+   this[_loop] = new Loop( delta => update(this, delta) );
 
 }
 

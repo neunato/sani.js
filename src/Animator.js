@@ -1,13 +1,18 @@
 
-import { pause }     from "./Animator.pause";
-import { stop }      from "./Animator.stop";
-import { scale }     from "./Animator.scale";
-import { update }    from "./Animator.update";
-import { configure } from "./Animator.configure";
-import { prepare }   from "./Animator.prepare";
-import { start }     from "./Animator.start";
-import { dye }       from "./Animator.dye";
+import Siteswap      from "siteswap.js";
+import { configure } from "./Animator.prototype.configure";
+import { start }     from "./Animator.prototype.start";
+import { stop }      from "./Animator.prototype.stop";
+import { pause }     from "./Animator.prototype.pause";
+import { dye }       from "./Animator.prototype.dye";
 import { round }     from "./round";
+ 
+
+const _settings = Symbol.for("settings")
+const _paused = Symbol.for("paused")
+const _balls = Symbol.for("balls")
+const _loop = Symbol.for("loop")
+
 
 
 class Animator {
@@ -18,20 +23,20 @@ class Animator {
 		if( !element )
 			throw new Error("Canvas element not supplied.")
 
-		element.addEventListener("click", this.pause.bind(this));
+		element.addEventListener("click", () => this.pause());
 
 
-		this.context  = element.getContext("2d");
-		this.loop     = null;
-		this.paused   = false;
-		
-		this.siteswap = null;
-		this.balls    = [];
+      this.context  = element.getContext("2d");
+      this.siteswap = null;
 
+      this[_loop]     = null;
+      this[_paused]   = false;
+      this[_balls]    = [];
+      
 
 		// Default settings.
 		const animator = this;
-		this.settings = {
+		this[_settings] = {
 
          // Configurable by `this.configure`.
          _dwell: 0.5,             // Affected by siteswap synchronicity and slowdown. Getter below.
@@ -77,12 +82,9 @@ class Animator {
 }
 
 Animator.prototype.start     = start;
-Animator.prototype.pause     = pause;
 Animator.prototype.stop      = stop;
-Animator.prototype.scale     = scale;
-Animator.prototype.update    = update;
+Animator.prototype.pause     = pause;
 Animator.prototype.configure = configure;
-Animator.prototype.prepare   = prepare;
 Animator.prototype.dye       = dye;
 
 

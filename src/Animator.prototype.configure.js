@@ -1,8 +1,10 @@
 
-
+const _settings = Symbol.for("settings");
+ 
+ 
 function configure( options ){
 
-	const settings = this.settings;
+   const settings = this[_settings];
 
    if( options.beatDuration !== undefined )
       settings.beatDuration = options.beatDuration;

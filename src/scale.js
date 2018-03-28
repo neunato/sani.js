@@ -1,11 +1,14 @@
 
+const _settings = Symbol.for("settings")
+
 // Resizes the canvas, scales and centers animation. Optionally, the sizes in metres can be
 // set (happens in `.prepare()` when the animations are calculated).
 
-function scale( width, height, catchHeight ){
+function scale( animator, width, height, catchHeight ){
 
-	const canvas = this.context.canvas;
-	const settings = this.settings;
+   const context = animator.context;
+	const canvas = context.canvas;
+	const settings = animator[_settings];
 
 	// Set new inner size, in metres.
 	if( width && height && catchHeight ){
@@ -36,10 +39,10 @@ function scale( width, height, catchHeight ){
 	};
 
 
-	this.context.translate(offset.x, canvas.height - offset.y - settings.catchHeight * settings.multiplier);
+	context.translate(offset.x, canvas.height - offset.y - settings.catchHeight * settings.multiplier);
 	
 	// Invert y axis.
-	this.context.scale(1, -1);
+	context.scale(1, -1);
 
 };
 
