@@ -44,11 +44,6 @@ function start( siteswap, notation ){
 	// Populate balls and scale the animation.
 	prepare(this);
 
-	if( settings.ballRadius * settings.multiplier * 2  <  settings.ballRadiusLimit ){
-		throw new Error("Balls too small for this screen.");
-	}
-
-
 	this[_paused] = false;
    this[_loop] = new Loop( delta => update(this, delta) );
 
