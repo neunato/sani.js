@@ -66,41 +66,6 @@ function calcCatchHeight( value, beatDuration, dwell ){
 }
 
 
-// When dwell time is greater than a full beat and there are throw 
-// value(s) of 1, dwell time for that action has to be diminished
-// to `1 - dwellStep`.
-
-function normaliseDwellTime( dwellTime, dwellStep, multiplexes ){
-
-	if( dwellTime >= 1 ){
-		const ones = multiplexes.reduce( (sum, map) => Math.max(sum, map["1-0"] || 0, map["1-1"] || 0), 0);
-		if( ones > 0 )
-			return round(1 - dwellStep, 2);
-	}
-
-	return dwellTime;
-
-}
-
-
-// This one is used to synchronise tosses and releases when
-// there are multiplex twin tosses.
-
-function calcTimes( value, dwell, dwellStep, mpxPosition, mpxCount ){
-
-	const waitTime   = round((mpxCount - 1 - mpxPosition) * dwellStep, 2);
-	const launchTime = Math.max(dwellStep, round(dwell - (mpxCount - 1) * dwellStep, 2));
-	const airTime    = round(value - (waitTime + launchTime), 2);
-
-	return {
-		waitTime,
-		launchTime,
-		airTime
-	};
-
-}
-
-
 // Adjust the throw sequence of async patterns by changing the 
 // hand sequence from `l` to `l,r`. This should possibly be taken 
 // care of on the `Siteswap` level, after some careful devising 
@@ -148,9 +113,15 @@ function prepare( animator ){
 	throwHeights = {};
 	throwVelocities = {};
 
-	const beatDuration = settings.beatDuration;
+	const beatDuration = settings.beatDuration * siteswap.degree;
 	const catchWidth = settings.catchWidth;
 	const innerWidth = settings.catchWidth * 2 + settings.handsGap;
+
+   const dwellMultiplier = (3 - siteswap.degree)
+	const minDwell = 0.1 * dwellMultiplier;
+   const maxDwell = 0.9 * dwellMultiplier;
+   const computedDwell = Math.max(minDwell, Math.min(maxDwell, settings.dwell * dwellMultiplier))
+
 
 	const throws = strictifyThrows(siteswap);
 	const n = lcm( throws.length, siteswap.strictStates.length );
@@ -171,8 +142,19 @@ function prepare( animator ){
 		});
 
 
-		const greatestTwinCount = Math.max( ...multiplexes.map(group => Math.max(...Object.keys(group).map(key => group[key])) ));
-		const dwellTime = normaliseDwellTime(settings.dwell, settings.dwellStep, multiplexes);
+
+      const greatestTwinCount = Math.max( ...multiplexes.map(group => Math.max(...Object.keys(group).map(key => group[key])) ));
+
+      // When dwell time is greater than a full beat and there are throw 
+      // value(s) of 1, dwell time for that action has to be diminished.
+      let dwell = computedDwell
+      if( computedDwell >= 1 ){
+         const ones = multiplexes.reduce( (sum, map) => Math.max(sum, map["1-0"] || 0, map["1-1"] || 0), 0);
+         if( ones > 0 )
+            dwell = 1 - minDwell;
+      }
+
+
 
 		for( let h = 0; h < 2; h++ ){
 
@@ -189,9 +171,16 @@ function prepare( animator ){
 					
 				const ball = balls[ schedule[h % siteswap.degree][0][j] - 1 ];
 
-				const { waitTime, launchTime, airTime } = calcTimes(toss.value, dwellTime, settings.dwellStep, --multiplexes[h][toss.value + "-" + toss.handTo], greatestTwinCount);
-				
-				
+
+				const dwellStep = greatestTwinCount === 1 ? 0 : Math.min(minDwell, (dwell - minDwell) / (greatestTwinCount - 1))
+            const at = --multiplexes[h][toss.value + "-" + toss.handTo]
+
+            // Synchronise tosses and releases when there are multiplex twin tosses.
+            const launchTime = dwell - (greatestTwinCount - 1) * dwellStep
+            const waitTime = dwellStep * at
+            const airTime = toss.value - (waitTime + launchTime)
+
+
 				// Catch animation.
 				{
 				let x1 = toss.handFrom === 0 ? 0 : innerWidth;
@@ -200,7 +189,7 @@ function prepare( animator ){
 				if( settings.reversed )
 					[x1, x2] = [x2, x1];
 
-				const height = calcCatchHeight( lowestValue, beatDuration, dwellTime );
+				const height = calcCatchHeight( lowestValue, beatDuration, dwell );
 				ball.animations.push( new CatchAnimation(launchTime * beatDuration, x1, x2, height) );
 				}
 

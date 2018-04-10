@@ -1861,17 +1861,13 @@ function configure( options ){
 	if( options.dwell !== undefined )
 		settings.dwell = options.dwell;
 
-	if( options.dwellStep !== undefined )
-		settings.dwellStep = options.dwellStep;
-
 	if( options.ballColor !== undefined )
 		settings.ballColor = options.ballColor;
 
 	if( options.reversed !== undefined )
 		settings.reversed = options.reversed;
 
-	// Get the unaffected _dwell value.
-	const { beatDuration, _dwell: dwell, dwellStep, slowdown, ballColor, reversed } = settings;
+	const { beatDuration, dwell, slowdown, ballColor, reversed } = settings;
 
    if( typeof beatDuration !== "number" )
       throw new Error("Invalid configuration (`beatDuration` must be a number).");
@@ -1887,14 +1883,6 @@ function configure( options ){
 		throw new Error("Invalid configuration (`dwell` must be a number).");
 	if( dwell < 0 || dwell > 1 )
 		throw new Error("Invalid configuration (`dwell` must be in [0-1] range).");
-	if( typeof dwellStep !== "number" )
-		throw new Error("Invalid configuration (`dwellStep` must be a number).");
-	if( dwellStep <= 0 )
-		throw new Error("Invalid configuration (`dwellStep` must be positive).");
-	if( dwellStep > dwell )
-		throw new Error("Invalid configuration (`dwellStep` can't be greater than `dwell`).");
-	if( dwell % dwellStep !== 0 )
-		throw new Error("Invalid configuration (`dwell` must be a multiple of `dwellStep`).");
 
 	if( typeof ballColor !== "string" )
 		throw new Error("Invalid configuration (`ballColor` must be a string).");
@@ -2268,18 +2256,6 @@ function scale( animator, width, height, catchHeight ){
 
 }
 
-// The `+ 0.00001` bit is taken from https://stackoverflow.com/questions/11832914/round-to-at-most-2-decimal-places-only-if-necessary
-// It seems to fix some rounding issues (like 1.005 => 1 instead of 1.01), 
-// but is "not foolproof for all numbers and it just works up to 3 d.p.".
-// Hopefully nothing will break.
-
-function round( float, precision = 1 ){
-
-	const tmp = Math.pow(10, precision);
-	return Math.round( (float + 0.00001) * tmp ) / tmp;
-
-}
-
 function lcm( a, b ){
 
 	const greater = Math.max(a, b);
@@ -2348,41 +2324,6 @@ function calcCatchHeight( value, beatDuration, dwell ){
 }
 
 
-// When dwell time is greater than a full beat and there are throw 
-// value(s) of 1, dwell time for that action has to be diminished
-// to `1 - dwellStep`.
-
-function normaliseDwellTime( dwellTime, dwellStep, multiplexes ){
-
-	if( dwellTime >= 1 ){
-		const ones = multiplexes.reduce( (sum, map) => Math.max(sum, map["1-0"] || 0, map["1-1"] || 0), 0);
-		if( ones > 0 )
-			return round(1 - dwellStep, 2);
-	}
-
-	return dwellTime;
-
-}
-
-
-// This one is used to synchronise tosses and releases when
-// there are multiplex twin tosses.
-
-function calcTimes( value, dwell, dwellStep, mpxPosition, mpxCount ){
-
-	const waitTime   = round((mpxCount - 1 - mpxPosition) * dwellStep, 2);
-	const launchTime = Math.max(dwellStep, round(dwell - (mpxCount - 1) * dwellStep, 2));
-	const airTime    = round(value - (waitTime + launchTime), 2);
-
-	return {
-		waitTime,
-		launchTime,
-		airTime
-	};
-
-}
-
-
 // Adjust the throw sequence of async patterns by changing the 
 // hand sequence from `l` to `l,r`. This should possibly be taken 
 // care of on the `Siteswap` level, after some careful devising 
@@ -2430,9 +2371,15 @@ function prepare( animator ){
 	throwHeights = {};
 	throwVelocities = {};
 
-	const beatDuration = settings.beatDuration;
+	const beatDuration = settings.beatDuration * siteswap.degree;
 	const catchWidth = settings.catchWidth;
 	const innerWidth = settings.catchWidth * 2 + settings.handsGap;
+
+   const dwellMultiplier = (3 - siteswap.degree);
+	const minDwell = 0.1 * dwellMultiplier;
+   const maxDwell = 0.9 * dwellMultiplier;
+   const computedDwell = Math.max(minDwell, Math.min(maxDwell, settings.dwell * dwellMultiplier));
+
 
 	const throws = strictifyThrows(siteswap);
 	const n = lcm( throws.length, siteswap.strictStates.length );
@@ -2453,8 +2400,19 @@ function prepare( animator ){
 		});
 
 
-		const greatestTwinCount = Math.max( ...multiplexes.map(group => Math.max(...Object.keys(group).map(key => group[key])) ));
-		const dwellTime = normaliseDwellTime(settings.dwell, settings.dwellStep, multiplexes);
+
+      const greatestTwinCount = Math.max( ...multiplexes.map(group => Math.max(...Object.keys(group).map(key => group[key])) ));
+
+      // When dwell time is greater than a full beat and there are throw 
+      // value(s) of 1, dwell time for that action has to be diminished.
+      let dwell = computedDwell;
+      if( computedDwell >= 1 ){
+         const ones = multiplexes.reduce( (sum, map) => Math.max(sum, map["1-0"] || 0, map["1-1"] || 0), 0);
+         if( ones > 0 )
+            dwell = 1 - minDwell;
+      }
+
+
 
 		for( let h = 0; h < 2; h++ ){
 
@@ -2471,9 +2429,16 @@ function prepare( animator ){
 					
 				const ball = balls[ schedule[h % siteswap.degree][0][j] - 1 ];
 
-				const { waitTime, launchTime, airTime } = calcTimes(toss.value, dwellTime, settings.dwellStep, --multiplexes[h][toss.value + "-" + toss.handTo], greatestTwinCount);
-				
-				
+
+				const dwellStep = greatestTwinCount === 1 ? 0 : Math.min(minDwell, (dwell - minDwell) / (greatestTwinCount - 1));
+            const at = --multiplexes[h][toss.value + "-" + toss.handTo];
+
+            // Synchronise tosses and releases when there are multiplex twin tosses.
+            const launchTime = dwell - (greatestTwinCount - 1) * dwellStep;
+            const waitTime = dwellStep * at;
+            const airTime = toss.value - (waitTime + launchTime);
+
+
 				// Catch animation.
 				{
 				let x1 = toss.handFrom === 0 ? 0 : innerWidth;
@@ -2482,7 +2447,7 @@ function prepare( animator ){
 				if( settings.reversed )
 					[x1, x2] = [x2, x1];
 
-				const height = calcCatchHeight( lowestValue, beatDuration, dwellTime );
+				const height = calcCatchHeight( lowestValue, beatDuration, dwell );
 				ball.animations.push( new CatchAnimation(launchTime * beatDuration, x1, x2, height) );
 				}
 
@@ -2591,7 +2556,6 @@ function update( animator, delta ){
 
 }
 
-const _settings$2 = Symbol.for("settings");
 const _paused$1 = Symbol.for("paused");
 const _loop$1 = Symbol.for("loop");
 
@@ -2621,38 +2585,10 @@ function start( siteswap$$1, notation ){
 		return;
 	}
 
-   const settings = this[_settings$2];
-
-	if( !validMultiplexTwins(siteswap$$1, settings.multiplexTwinLimit)){
-		throw new Error("Multiplex twin limit exceeded.");
-	}
-
-	// Populate balls and scale the animation.
-	prepare(this);
+   prepare(this);
 
 	this[_paused$1] = false;
    this[_loop$1] = new Loop( delta => update(this, delta) );
-
-}
-
-// Check if all multiplex twins fit in a beat with current `dwellStep`. 
-
-function validMultiplexTwins( siteswap$$1, multiplexTwinLimit ){
-
-	if( siteswap$$1.multiplex <= multiplexTwinLimit )
-		return true;
-
-   // This is identical to `multiplexes` in `Animator.prepare.js` and should be extracted to one place.
-   const multiplexes = siteswap$$1.throws.map(action => action.map(function(release){
-      return release.reduce(function(result, toss){
-         const key = `${toss.value}-${toss.handTo}`;
-         result[key] = (result[key] || 0) + 1;
-         return result;
-      }, {});
-   }));
-
-   const max = Math.max( ...multiplexes.map( action => Math.max( ...action.map(group => Math.max(...Object.keys(group).map(key => group[key]))) ) ) );
-	return max <= multiplexTwinLimit;
 
 }
 
@@ -2752,8 +2688,7 @@ class Animator {
 		this[_settings] = {
 
          // Configurable by `this.configure`.
-         _dwell: 0.5,             // Affected by siteswap synchronicity and slowdown. Getter below.
-         dwellStep: 0.25,
+         dwell: 0.5,
          slowdown: 1,
          reversed: false,
          ballColor: "#ff3636",
@@ -2770,22 +2705,11 @@ class Animator {
 
 
 			// Computed properties.
-			get multiplexTwinLimit(){
-				return 1 / this.dwellStep - 1;
-			},
-
 			get handsGap(){
 				if( animator.siteswap === null )
 					throw new Error("Can't compute `handsGap` without a siteswap.");
 				return (Math.max(0.2, (9-3) / 9 / 10 * animator.siteswap.greatestValue) + (animator.siteswap.degree === 2 ? 0.2 : 0)) * 1000;
-			},
-			get dwell(){
-				if( animator.siteswap === null )
-					throw new Error("Can't compute `dwell` without a siteswap.");
-				return animator.siteswap.degree === 1 ? round(this._dwell * 2) : this._dwell;
-			},
-
-			set dwell( value ){  this._dwell = value;  },
+			}
 
 		};
 

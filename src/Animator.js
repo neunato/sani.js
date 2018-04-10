@@ -39,8 +39,7 @@ class Animator {
 		this[_settings] = {
 
          // Configurable by `this.configure`.
-         _dwell: 0.5,             // Affected by siteswap synchronicity and slowdown. Getter below.
-         dwellStep: 0.25,
+         dwell: 0.5,
          slowdown: 1,
          reversed: false,
          ballColor: "#ff3636",
@@ -57,22 +56,11 @@ class Animator {
 
 
 			// Computed properties.
-			get multiplexTwinLimit(){
-				return 1 / this.dwellStep - 1;
-			},
-
 			get handsGap(){
 				if( animator.siteswap === null )
 					throw new Error("Can't compute `handsGap` without a siteswap.");
 				return (Math.max(0.2, (9-3) / 9 / 10 * animator.siteswap.greatestValue) + (animator.siteswap.degree === 2 ? 0.2 : 0)) * 1000;
-			},
-			get dwell(){
-				if( animator.siteswap === null )
-					throw new Error("Can't compute `dwell` without a siteswap.");
-				return animator.siteswap.degree === 1 ? round(this._dwell * 2) : this._dwell;
-			},
-
-			set dwell( value ){  this._dwell = value;  },
+			}
 
 		};
 

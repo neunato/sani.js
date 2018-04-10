@@ -37,10 +37,6 @@ function start( siteswap, notation ){
 
    const settings = this[_settings];
 
-	if( !validMultiplexTwins(siteswap, settings.multiplexTwinLimit)){
-		throw new Error("Multiplex twin limit exceeded.");
-	}
-
 	// Populate balls and scale the animation.
 	prepare(this);
 
@@ -50,26 +46,3 @@ function start( siteswap, notation ){
 }
 
 export { start };
-
-
-
-// Check if all multiplex twins fit in a beat with current `dwellStep`. 
-
-function validMultiplexTwins( siteswap, multiplexTwinLimit ){
-
-	if( siteswap.multiplex <= multiplexTwinLimit )
-		return true;
-
-   // This is identical to `multiplexes` in `Animator.prepare.js` and should be extracted to one place.
-   const multiplexes = siteswap.throws.map(action => action.map(function(release){
-      return release.reduce(function(result, toss){
-         const key = `${toss.value}-${toss.handTo}`;
-         result[key] = (result[key] || 0) + 1;
-         return result;
-      }, {});
-   }));
-
-   const max = Math.max( ...multiplexes.map( action => Math.max( ...action.map(group => Math.max(...Object.keys(group).map(key => group[key]))) ) ) );
-	return max <= multiplexTwinLimit;
-
-}

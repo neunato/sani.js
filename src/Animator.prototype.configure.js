@@ -15,17 +15,13 @@ function configure( options ){
 	if( options.dwell !== undefined )
 		settings.dwell = options.dwell;
 
-	if( options.dwellStep !== undefined )
-		settings.dwellStep = options.dwellStep;
-
 	if( options.ballColor !== undefined )
 		settings.ballColor = options.ballColor;
 
 	if( options.reversed !== undefined )
 		settings.reversed = options.reversed;
 
-	// Get the unaffected _dwell value.
-	const { beatDuration, _dwell: dwell, dwellStep, slowdown, ballColor, reversed } = settings;
+	const { beatDuration, dwell, slowdown, ballColor, reversed } = settings;
 
    if( typeof beatDuration !== "number" )
       throw new Error("Invalid configuration (`beatDuration` must be a number).");
@@ -41,14 +37,6 @@ function configure( options ){
 		throw new Error("Invalid configuration (`dwell` must be a number).");
 	if( dwell < 0 || dwell > 1 )
 		throw new Error("Invalid configuration (`dwell` must be in [0-1] range).");
-	if( typeof dwellStep !== "number" )
-		throw new Error("Invalid configuration (`dwellStep` must be a number).");
-	if( dwellStep <= 0 )
-		throw new Error("Invalid configuration (`dwellStep` must be positive).");
-	if( dwellStep > dwell )
-		throw new Error("Invalid configuration (`dwellStep` can't be greater than `dwell`).");
-	if( dwell % dwellStep !== 0 )
-		throw new Error("Invalid configuration (`dwell` must be a multiple of `dwellStep`).");
 
 	if( typeof ballColor !== "string" )
 		throw new Error("Invalid configuration (`ballColor` must be a string).");
