@@ -1,4 +1,7 @@
 
+import { motion } from "./motion";
+
+
 class ThrowAnimation {
 	
 	constructor( duration, position, velocity, acceleration ){
@@ -16,8 +19,8 @@ class ThrowAnimation {
 	getPosition( time ){
 
 		const position = {
-			x: this.position.x + this.velocity.x * time,
-			y: this.position.y + this.velocity.y * time + this.acceleration.y * time * time * 0.5
+         x: this.position.x + motion.s(this.velocity.x, this.acceleration.x, time),
+         y: this.position.y + motion.s(this.velocity.y, this.acceleration.y, time)
 		};
 		return position;
 

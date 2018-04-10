@@ -6,6 +6,7 @@ import { WaitAnimation }   from "./animationWait";
 import { scale }           from "./scale";
 import { round }           from "./round";
 import { lcm }             from "./lcm";
+import { motion }          from "./motion";
 
 
  
@@ -18,50 +19,22 @@ const _balls = Symbol.for("balls")
 const gravity = { x: 0, y: -9.81 / 1000 };
 
 
-// These are used to cache some computations and are essential for 
-// scaling and centering the animation. Reset on every `.prepare()`.
 
-let catchHeights = null;
-let throwHeights = null;
-let throwVelocities = null;
-
-function calcThrowVelocity( airTime, beatDuration ){
-
-	if( throwVelocities[airTime] === undefined )
-		throwVelocities[airTime] = Math.sqrt(2 * -gravity.y * calcThrowHeight(airTime, beatDuration));
-
-	return throwVelocities[airTime];
-
-}
-
-function calcThrowHeight( airTime, beatDuration ){
-
-	if( throwHeights[airTime] === undefined )
-		throwHeights[airTime] = -gravity.y / 8 * Math.pow(airTime * beatDuration, 2);
-	
-	return throwHeights[airTime];
-
-}
-
+// This one needs a complete makeover.
 function calcCatchHeight( value, beatDuration, dwell ){
 
-   if( catchHeights[value] === undefined ){
+   const bps = 1 / beatDuration;
 
-      const bps = 1 / beatDuration;
+	// Higher throw means higher catch. 
+	const factor1 = value * 0.04;
 
-		// Higher throw means higher catch. 
-		const factor1 = value * 0.04;
+	// Greater speed means lower catch.
+	const factor2 = (3 - bps) * factor1 * 0.4;
 
-		// Greater speed means lower catch.
-		const factor2 = (3 - bps) * factor1 * 0.4;
+	// Greater dwell means higher catch.
+	const factor3 = (dwell - 0.5) * 0.5 * factor1 * 0.4;
 
-		// Greater dwell means higher catch.
-		const factor3 = (dwell - 0.5) * 0.5 * factor1 * 0.4;
-
-		catchHeights[value] = (factor1 + factor2 + factor3) * 1000;
-	}
-
-	return catchHeights[value];
+	return (factor1 + factor2 + factor3) * 1000;
 
 }
 
@@ -108,10 +81,11 @@ function prepare( animator ){
    const balls = Array(siteswap.props).fill().map( () => new Ball(settings.ballColor) );
 	animator[_balls] = balls;
 
-	// Reset cache.
-	catchHeights = {};
-	throwHeights = {};
-	throwVelocities = {};
+
+   // Track throw and catch heights for scaling.
+   let maxThrowHeight = 0;
+   let maxCatchHeight = 0;
+
 
 	const beatDuration = settings.beatDuration * siteswap.degree;
 	const catchWidth = settings.catchWidth;
@@ -176,12 +150,25 @@ function prepare( animator ){
             const at = --multiplexes[h][toss.value + "-" + toss.handTo]
 
             // Synchronise tosses and releases when there are multiplex twin tosses.
-            const launchTime = dwell - (greatestTwinCount - 1) * dwellStep
-            const waitTime = dwellStep * at
-            const airTime = toss.value - (waitTime + launchTime)
+            let launchTime = dwell - (greatestTwinCount - 1) * dwellStep
+            let waitTime = dwellStep * at
+            let airTime = toss.value - (waitTime + launchTime)
+            launchTime *= beatDuration
+            waitTime *= beatDuration
+            airTime *= beatDuration
 
 
-				// Catch animation.
+            const throwHeight = motion.s(0, -gravity.y, airTime / 2);
+            const catchHeight = calcCatchHeight(lowestValue, beatDuration, dwell);
+
+            if( throwHeight > maxThrowHeight )
+               maxThrowHeight = throwHeight;
+            if( catchHeight > maxCatchHeight )
+               maxCatchHeight = catchHeight;
+    
+
+
+    			// Catch animation.
 				{
 				let x1 = toss.handFrom === 0 ? 0 : innerWidth;
 				let x2 = toss.handFrom === 0 ? catchWidth : innerWidth - catchWidth;
@@ -189,8 +176,7 @@ function prepare( animator ){
 				if( settings.reversed )
 					[x1, x2] = [x2, x1];
 
-				const height = calcCatchHeight( lowestValue, beatDuration, dwell );
-				ball.animations.push( new CatchAnimation(launchTime * beatDuration, x1, x2, height) );
+				ball.animations.push( new CatchAnimation(launchTime, x1, x2, catchHeight) );
 				}
 
 
@@ -217,15 +203,15 @@ function prepare( animator ){
 				};
 
 				const velocity = {
-					x: (x2 - x1) / (airTime * beatDuration),
-					y: calcThrowVelocity(airTime, beatDuration)
+					x: (x2 - x1) / (airTime),
+					y: motion.v(0, -gravity.y, throwHeight)
 				};
 
-				ball.animations.push( new ThrowAnimation(airTime * beatDuration, position, velocity, gravity) );
+				ball.animations.push( new ThrowAnimation(airTime, position, velocity, gravity) );
 
 				// Wait animation.
 				if( waitTime > 0 ){
-					ball.animations.push( new WaitAnimation(waitTime * beatDuration, x2, 0) );
+					ball.animations.push( new WaitAnimation(waitTime, x2, 0) );
 				}
 					
 				}
@@ -233,14 +219,10 @@ function prepare( animator ){
 		}
 	}
 
-	// Once the throw/catch heights in metres are known, we can assign `innerWidth` 
-	// and `innerHeight` which will be used for scaling and centering.
-	const greatestThrowHeight = Math.max( ...Object.keys(throwHeights).map(key => throwHeights[key]) );
-	const greatestCatchHeight = Math.max( ...Object.keys(catchHeights).map(key => catchHeights[key]) );
-	const innerHeight = greatestThrowHeight + greatestCatchHeight;
-
-	scale(animator, innerWidth, innerHeight, greatestCatchHeight);
-
+	// Once the throw/catch heights in milimetres are known, we can assign `innerWidth` 
+	// and `innerHeight` which are used for scaling and centering.
+   const innerHeight = maxThrowHeight + maxCatchHeight;
+   scale(animator, innerWidth, innerHeight, maxCatchHeight);
 
 
    // Delay initial animations.
