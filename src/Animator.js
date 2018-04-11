@@ -52,15 +52,7 @@ class Animator {
 			innerWidth: 0,           // In milimetres. Set by `.scale()`.
 			catchHeight: 0,          // In milimetres. Set by `.scale()`.
 
-			multiplier: null,        // Pixels per milimetre.
-
-
-			// Computed properties.
-			get handsGap(){
-				if( animator.siteswap === null )
-					throw new Error("Can't compute `handsGap` without a siteswap.");
-				return (Math.max(0.2, (9-3) / 9 / 10 * animator.siteswap.greatestValue) + (animator.siteswap.degree === 2 ? 0.2 : 0)) * 1000;
-			}
+			multiplier: null        // Pixels per milimetre.
 
 		};
 
