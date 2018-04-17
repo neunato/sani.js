@@ -87,7 +87,7 @@ function prepare( animator ){
 	for( let i = 0; i < n; i++ ){
 
 		const action = throws[i % throws.length];
-		const schedule = siteswap.strictStates[i % siteswap.strictStates.length].schedule;
+		const schedule = siteswap.strictStates[i % siteswap.strictStates.length];
 
 		// Determine greatest multiplex count of same throw values. This has to include both hands
 		// (if used) as throws happen at the same time, even if one hand has no multiplex tosses.
@@ -223,7 +223,7 @@ function prepare( animator ){
 
 
    // Delay initial animations.
-   const schedule = siteswap.strictStates[0].schedule;
+   const schedule = siteswap.strictStates[0];
    for( const state of schedule ){
       for( let beat = 0; beat < state.length; beat++ ){
          for( const id of state[beat] ){

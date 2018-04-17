@@ -1,5 +1,5 @@
 
-import Siteswap      from "siteswap.js";
+import { Siteswap }  from "siteswap.js/src/Siteswap.js";
 import { configure } from "./Animator.prototype.configure";
 import { start }     from "./Animator.prototype.start";
 import { stop }      from "./Animator.prototype.stop";
