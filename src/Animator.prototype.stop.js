@@ -1,5 +1,6 @@
 
-const _settings  = Symbol.for("settings")
+import { clear } from "./clear"
+
 const _balls = Symbol.for("balls")
 const _loop  = Symbol.for("loop")
 
@@ -10,16 +11,11 @@ function stop(){
    if( !loop )
       return;
 
-   const balls = this[_balls];
-   const settings = this[_settings];
-
-   for( const ball of balls )
-      ball.clear(this.context, settings);
-   
+   clear(this.context);
    loop.kill();
    this[_loop] = null;
+   this[_balls].length = 0;
    this.siteswap = null;
-   balls.length = 0;
 
 }
 

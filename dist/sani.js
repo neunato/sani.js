@@ -1949,18 +1949,6 @@ class Ball {
 
    }
 
-   clear( context, settings ){
-
-      const { ballRadius, multiplier } = settings;
-
-      // Clear an additional 2px pixels of width to fix occasional subpixel trails.
-      const width = (ballRadius * multiplier + 2) * 2;
-      const x = this.position.x * multiplier - width / 2;
-      const y = this.position.y * multiplier - width / 2;
-      context.clearRect(x, y, width, width);
-
-   }
-
    draw( context, settings ){
 
       const radius = settings.ballRadius * settings.multiplier;
@@ -2500,6 +2488,15 @@ function prepare( animator ){
 
 }
 
+function clear( context ){
+
+   context.save();
+   context.setTransform(1, 0, 0, 1, 0, 0);
+   context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+   context.restore();
+
+}
+
 const _settings$5 = Symbol.for("settings");
 const _paused$2 = Symbol.for("paused");
 const _balls$3 = Symbol.for("balls");
@@ -2530,9 +2527,7 @@ function update( animator, delta ){
 	}
 
    // Update ball positions.
-   for( const ball of balls ){
-      ball.clear(context, settings);
-   }
+   clear(context);
 
    for( const ball of balls ){
       ball.update(delta / settings.slowdown);   
@@ -2577,7 +2572,6 @@ function start( siteswap$$1, notation ){
 
 }
 
-const _settings$6  = Symbol.for("settings");
 const _balls$4 = Symbol.for("balls");
 const _loop$2  = Symbol.for("loop");
 
@@ -2588,16 +2582,11 @@ function stop(){
    if( !loop )
       return;
 
-   const balls = this[_balls$4];
-   const settings = this[_settings$6];
-
-   for( const ball of balls )
-      ball.clear(this.context, settings);
-   
+   clear(this.context);
    loop.kill();
    this[_loop$2] = null;
+   this[_balls$4].length = 0;
    this.siteswap = null;
-   balls.length = 0;
 
 }
 
@@ -2609,7 +2598,7 @@ function pause(){
 
 }
 
-const _settings$7 = Symbol.for("settings");
+const _settings$6 = Symbol.for("settings");
 const _paused$4 = Symbol.for("paused");
 const _balls$5 = Symbol.for("balls");
  
@@ -2619,26 +2608,25 @@ const _balls$5 = Symbol.for("balls");
 function dye( color, id ){
 
    const balls = this[_balls$5];
-   const settings = this[_settings$7];
+   const settings = this[_settings$6];
    const context = this.context;
 
-	if( id === undefined ){
-		for( const ball of balls )
-			ball.color = color;
-	}
-	else{
-		if( !balls[id] )
-			throw new Error("Ball doesn't exist.");
-		balls[id].color = color;
-	}
-	
+   if( id === undefined ){
+      for( const ball of balls )
+         ball.color = color;
+   }
+   else{
+      if( !balls[id] )
+         throw new Error("Ball doesn't exist.");
+      balls[id].color = color;
+   }
+   
 
-	if( this[_paused$4] ){
-	   for( const ball of balls )
-	      ball.clear(context, settings);
-	   for( const ball of balls )
-	      ball.draw(context, settings);
-	}
+   if( this[_paused$4] ){
+      clear(context);
+      for( const ball of balls )
+         ball.draw(context, settings);
+   }
 
 }
 

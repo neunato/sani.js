@@ -26,18 +26,6 @@ class Ball {
 
    }
 
-   clear( context, settings ){
-
-      const { ballRadius, multiplier } = settings;
-
-      // Clear an additional 2px pixels of width to fix occasional subpixel trails.
-      const width = (ballRadius * multiplier + 2) * 2;
-      const x = this.position.x * multiplier - width / 2;
-      const y = this.position.y * multiplier - width / 2;
-      context.clearRect(x, y, width, width);
-
-   }
-
    draw( context, settings ){
 
       const radius = settings.ballRadius * settings.multiplier;

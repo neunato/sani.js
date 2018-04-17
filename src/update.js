@@ -1,5 +1,6 @@
 
 import { scale } from "./scale";
+import { clear } from "./clear";
 
 
 const _settings = Symbol.for("settings")
@@ -32,9 +33,7 @@ function update( animator, delta ){
 	}
 
    // Update ball positions.
-   for( const ball of balls ){
-      ball.clear(context, settings);
-   }
+   clear(context);
 
    for( const ball of balls ){
       ball.update(delta / settings.slowdown);   
