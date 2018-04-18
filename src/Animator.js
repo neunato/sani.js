@@ -42,7 +42,7 @@ class Animator {
          beatDuration: 300,         // In miliseconds.
 
          // Not configurable.
-			ballRadius: 100,         // In milimetres.
+			ballRadius: 70,         // In milimetres.
 			catchWidth: 400,         // In milimetres.
 			innerHeight: 0,          // In milimetres. Set by `.scale()`.
 			innerWidth: 0,           // In milimetres. Set by `.scale()`.
