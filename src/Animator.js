@@ -23,16 +23,12 @@ class Animator {
 		if( !element )
 			throw new Error("Canvas element not supplied.")
 
-		element.addEventListener("click", () => this.pause());
-
-
       this.context  = element.getContext("2d");
       this.siteswap = null;
 
       this[_loop]     = null;
       this[_paused]   = false;
       this[_balls]    = [];
-      
 
 		// Default settings.
 		const animator = this;
