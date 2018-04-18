@@ -1,18 +1,18 @@
 # sani.js
 
-Canvas based siteswap animator in JavaScript for modern browsers.
+Siteswap animator in JavaScript for modern browsers (tested in Chrome, Firefox, Edge, Safari, Opera).
 
 Supports (multiplex) asynchronous and synchronous juggling patterns.
 
-
 [Check it out!](https://independentgeorge.github.io/sani.js/)
+
 
 ## Usage
 
 
 Include the script
 ```html
-<script src="dist/sani.min.js"></script>
+<script src="dist/sani.js"></script>
 ```
 
 Create a canvas
@@ -60,29 +60,19 @@ Type and value of a property of the configuration object must be allowed by the 
 | -------------- | -------------- | -------------- | ---------- | -------------------------------------------------------------------
 |`beatDuration`  |*Number*        |positive float  |300         |Beat duration in miliseconds.<sup>1</sup>
 |`slowdown`      |*Number*        |float           |1           |Number of real seconds per animator second.
-|`dwell`         |*Number*        |float [0-1], multiple of `dwellStep`    |0.5         |Hold time, expressed as ratio of full to empty hand.<sup>2</sup>
-|`dwellStep`     |*Number*        |positive float  |0.25        |Amount of dwell time between two catches of "twin multiplexes".<sup>3</sup>
+|`dwell`         |*Number*        |float [0-1]     |0.5         |Hold time, expressed as ratio of full to empty hand.<sup>2</sup>
 |`reversed`      |*Boolean*       |true, false     |false       |Inside or outside tosses.
 |`ballColor`     |*String*        |[css color][1]  |"#ff3636"   |Color of balls.
 
 <sup>1</sup> *Beat duration is doubled when juggling synchronously as jugglers tend to slow down in reality.*  
 <sup>2</sup> *Dwell time ranges 0-2 beats in asynchronous, and 0-1 in synchronous juggling.*  
-<sup>3</sup> *In such multiplex groups, like `[55]`, one ball will be caught `dwellStep` of a beat later (or earlier, depending on `dwell`). The number of such multiplex tosses is limited to `(1 / dwellStep) - 1`.*
 
 
 ## To do
 
-
-High priority
-
-- Test browser support and add polyfills.
-- Cache canvas arc paths and draw images. I've noticed some lag with large balls in Firefox.
-
-Low priority
-
+- Cache canvas arc paths and draw images.
 - Start juggling in the middle of a siteswap (optionally?).
 - Create and hook up a space time diagram.
-- Bundle settings in presets.
 - GIF exporting.
 - Throw value labels.
 - Make `2`s held (custom animation which includes catch and throw?).
@@ -107,9 +97,6 @@ And so much more...
 ## License
 
 MIT License
-
-
-
 
 
 
