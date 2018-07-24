@@ -1,0 +1,23 @@
+{
+  "name": "sani-web.js",
+  "scripts": {
+    "build": "gulp build",
+    "watch": "gulp default"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "babel-minify": "0.4.0",
+    "fontfaceobserver": "2.0.13",
+    "glupost": "3.1.0",
+    "less": "3.8.0",
+    "rollup": "0.58.0",
+    "rollup-plugin-commonjs": "9.1.0",
+    "rollup-plugin-node-resolve": "3.3.0",
+    "rollup-plugin-replace": "2.0.0",
+    "rollup-plugin-vue": "4.3.2",
+    "siteswap.js": "0.3.0",
+    "vue": "2.5.17",
+    "vue-template-compiler": "2.5.17",
+    "vuescroll": "4.7.1-rc.9"
+  }
+}

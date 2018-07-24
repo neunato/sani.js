@@ -4,30 +4,30 @@
 <head>
 	<meta charset="utf-8">
    <meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" type="text/css" href="css/main.css">
-	<script defer src="js/sani.js"></script>
-	<script defer src="js/main.js"></script>
-   <script>
-     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-     (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-     m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-     })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	<link rel="stylesheet" type="text/css" href="app/main.css">
+   <script src="../master/dist/sani.js"></script>
+   <script src="app/main.js"></script>
 
-     ga('create', 'UA-91559453-1', 'auto');
-     ga('send', 'pageview');
+   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-91559453-3"></script>
+   <script>
+     window.dataLayer = window.dataLayer || [];
+     function gtag(){dataLayer.push(arguments);}
+     gtag('js', new Date());
+     gtag('config', 'UA-91559453-3');
    </script>
 </head>
 
-<body class="configuring">
+
+<body>
+
+   <section id="overlay" class="loading">
+      <div id="loader"><span></span><span></span><span></span><span></span></div>
+   </section>
 
 
-<section id="overlay" class="loading">
-   <div id="loader"><span></span><span></span><span></span><span></span></div>
-</section>
+   <script>
 
-
-
-<script>
+   "use strict"
 
    // Feature detection.
    if( typeof Symbol !== "function" ){
@@ -41,7 +41,6 @@
          die()
    }
 
-
    function die(){
       var overlay = document.getElementById("overlay")
       overlay.className = "unsupported"
@@ -52,85 +51,7 @@
          document.execCommand("Stop")    // IE.
    }
 
-</script>
-
-
-
-
-<main id="animator-main">
-   <canvas id="animator-canvas"></canvas>
-   <div id="animator-resize"></div>
-</main>
-
-
-<nav id="animator-nav">
-
-	<input id="animator-siteswap">
-
-
-   <section id="siteswap-info">
-      <p id="siteswap-message">Enter siteswap</p>
-      <dl>
-         <dt class="siteswap-property" data-name="degree">Type</dt><dd></dd>
-         <dt class="siteswap-property" data-name="props">Balls</dt><dd></dd>
-         <dt class="siteswap-property" data-name="period">Period</dt><dd></dd>
-         <dt class="siteswap-property" data-name="fullPeriod">Full period</dt><dd></dd>
-         <dt class="siteswap-property" data-name="multiplex">Multiplex</dt><dd></dd>
-         <dt class="siteswap-property" data-name="groundState">Ground state</dt><dd></dd>
-         <dt class="siteswap-property" data-name="prime">Prime</dt><dd></dd>
-         <dt class="siteswap-property" data-name="composition">Composition</dt><dd></dd>
-         <dt class="siteswap-property" data-name="orbits">Orbits</dt><dd></dd>
-         <dt class="siteswap-property" data-name="states">States</dt><dd></dd>
-      </dl>
-   </section>
-
-   <section id="controls">
-      <img src="css/expand.png" id="controls-toggle">
-
-      <div class="animator-setting slowdown">
-         <p>Animation speed (%)</p>
-         <ul>
-            <li data-value="slowdown-3">33</li>
-            <li data-value="slowdown-2">50</li>
-            <li data-value="slowdown-1">100</li>
-         </ul>
-      </div>
-      <div class="animator-setting beatDuration">
-         <p>Juggling speed</p>
-         <ul>
-            <li data-value="beatDuration-400">Slow</li>
-            <li data-value="beatDuration-333">Normal</li>
-            <li data-value="beatDuration-267">Fast</li>
-         </ul>
-      </div>
-      <div class="animator-setting dwell">
-         <p>Dwell time (%)</p>
-         <ul>
-            <li data-value="dwell-0.25">25</li>
-            <li data-value="dwell-0.5">50</li>
-            <li data-value="dwell-0.75">75</li>
-         </ul>
-      </div>
-      <div class="animator-setting reversed">
-         <p>Direction</p>
-         <ul>
-            <li data-value="reversed-false">Normal</li>
-            <li data-value="reversed-true">Reversed</li>
-         </ul>
-      </div>
-      <div class="animator-setting color">
-         <p>Ball color</p>
-         <ul>
-            <li data-value="ballColor-#ff3636"></li>
-            <li data-value="ballColor-#e0c36b"></li>
-            <li data-value="ballColor-#31cc64"></li>
-            <li data-value="ballColor-#ae65ed"></li>
-            <li data-value="ballColor-#4888EF"></li>
-         </ul>
-      </div>
-   </section>
-
-</nav>
+   </script>
 
 </body>
 </html>
