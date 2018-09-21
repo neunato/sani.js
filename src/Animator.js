@@ -1,12 +1,10 @@
 
-import { Siteswap }  from "siteswap.js/src/Siteswap.js";
-import { configure } from "./Animator.prototype.configure";
-import { start }     from "./Animator.prototype.start";
-import { stop }      from "./Animator.prototype.stop";
-import { pause }     from "./Animator.prototype.pause";
-import { dye }       from "./Animator.prototype.dye";
-import { round }     from "./round";
- 
+import { configure } from "./Animator.prototype.configure"
+import { start }     from "./Animator.prototype.start"
+import { stop }      from "./Animator.prototype.stop"
+import { pause }     from "./Animator.prototype.pause"
+import { dye }       from "./Animator.prototype.dye"
+
 
 const _settings = Symbol.for("settings")
 const _paused = Symbol.for("paused")
@@ -17,51 +15,50 @@ const _loop = Symbol.for("loop")
 
 class Animator {
 
-	constructor( canvas, options = {} ){
+   constructor(canvas, options = {}) {
 
-		const element = typeof canvas === "string" ? document.getElementById(canvas) : canvas;
-		if( !element )
-			throw new Error("Canvas element not supplied.")
+      const element = typeof canvas === "string" ? document.getElementById(canvas) : canvas
+      if (!element)
+         throw new Error("Canvas element not supplied.")
 
-      this.context  = element.getContext("2d");
-      this.siteswap = null;
+      this.context = element.getContext("2d")
+      this.siteswap = null
 
-      this[_loop]     = null;
-      this[_paused]   = false;
-      this[_balls]    = [];
+      this[_loop] = null
+      this[_paused] = false
+      this[_balls] = []
 
-		// Default settings.
-		const animator = this;
-		this[_settings] = {
+      // Default settings.
+      this[_settings] = {
 
          // Configurable by `this.configure`.
          dwell: 0.5,
          slowdown: 1,
          reversed: false,
          ballColor: "#ff3636",
-         beatDuration: 300,         // In miliseconds.
+         beatDuration: 300,       // In miliseconds.
 
          // Not configurable.
-			ballRadius: 70,         // In milimetres.
-			catchWidth: 400,         // In milimetres.
-			innerHeight: 0,          // In milimetres. Set by `.scale()`.
-			innerWidth: 0,           // In milimetres. Set by `.scale()`.
-			catchHeight: 0,          // In milimetres. Set by `.scale()`.
+         ballRadius: 70,          // In milimetres.
+         catchWidth: 400,         // In milimetres.
+         innerHeight: 0,          // In milimetres. Set by `.scale()`.
+         innerWidth: 0,           // In milimetres. Set by `.scale()`.
+         catchHeight: 0,          // In milimetres. Set by `.scale()`.
 
-			multiplier: null        // Pixels per milimetre.
+         multiplier: null         // Pixels per milimetre.
 
-		};
+      }
+      this.configure(options)
 
-		this.configure(options);
+   }
 
-	}
 }
 
-Animator.prototype.start     = start;
-Animator.prototype.stop      = stop;
-Animator.prototype.pause     = pause;
-Animator.prototype.configure = configure;
-Animator.prototype.dye       = dye;
+Animator.prototype.start = start
+Animator.prototype.stop = stop
+Animator.prototype.pause = pause
+Animator.prototype.configure = configure
+Animator.prototype.dye = dye
 
 
-export { Animator };
+export { Animator }

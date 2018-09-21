@@ -1,20 +1,19 @@
 
 class WaitAnimation {
 
-	constructor( duration, x, y ){
+   constructor(duration, x, y) {
 
-      this.duration = duration;
-		this.position = { x, y };
+      this.duration = duration
+      this.position = { x, y }
 
-	}
+   }
 
-	getPosition(){
+   getPosition() {
 
-		return this.position;
+      return this.position
 
-	}
+   }
 
 }
 
-
-export { WaitAnimation };
+export { WaitAnimation }

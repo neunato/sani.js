@@ -1,24 +1,27 @@
 
-const rollup    = require("rollup")
-const resolve   = require("rollup-plugin-node-resolve")
-const commonjs  = require("rollup-plugin-commonjs")
-const minify    = require("babel-minify")
+"use strict"      // eslint-disable-line strict
+
+
+const rollup = require("rollup")
+const resolve = require("rollup-plugin-node-resolve")
+const commonjs = require("rollup-plugin-commonjs")
+const minify = require("babel-minify")
 
 
 const t = {
 
-   rollup(contents, file){
+   rollup(contents, file) {
       return rollup.rollup({ input: file.path, plugins: [resolve(), commonjs()] })
-            .then( bundle => bundle.generate({ format: "iife", name: "Animator" }) )
-            .then( ({ code }) => code )
-            .catch( handleRollupError )
+         .then((bundle) => bundle.generate({ format: "iife", name: "Animator" }))
+         .then(({ code }) => code)
+         .catch(handleRollupError)
    },
 
-   minify(contents, file){
-      try{
+   minify(contents) {
+      try {
          return minify(contents, { mangle: { exclude: ["Animator", "Siteswap"] }, mergeVars: /* for some reason this breaks something */ false }).code
       }
-      catch(e){
+      catch (e) {
          handleMinifyError(e)
       }
    }
@@ -34,7 +37,7 @@ const configuration = {
          watch: "src/*.js",
          src: "src/_entry.js",
          rename: "dist/sani.js",
-         transforms: [t.rollup, t.minify]   
+         transforms: [t.rollup, t.minify]
       },
 
       "default": {
@@ -43,27 +46,26 @@ const configuration = {
 
    }
 
-};
+}
 
-require("glupost")(configuration);
-
-
+require("glupost")(configuration)
 
 
-function handleRollupError({ name, message, loc, frame }){
+
+function handleRollupError({ name, message, loc, frame }) {
 
    let output = "\nRollup errored out\n\n"
    output += ` ${name}: ${message}\n`
-   if( loc )
+   if (loc)
       output += `     at ${loc.file}:${loc.line}:${loc.column}\n`
-   if( frame )
+   if (frame)
       output += `\n${frame.replace(/^/mg, " ")}\n`
    throw output
 
 }
 
-function handleMinifyError({ name, message }){
+function handleMinifyError({ name, message }) {
 
-   throw `\nMinify errored out\n\n ${name}: ${message}\n`
+   throw `\nMinify errored out\n\n ${name}: ${message}\n`       // eslint-disable-line no-throw-literal
 
 }

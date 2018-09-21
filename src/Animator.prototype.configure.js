@@ -1,51 +1,51 @@
 
-const _settings = Symbol.for("settings");
- 
- 
-function configure( options ){
+const _settings = Symbol.for("settings")
 
-   const settings = this[_settings];
 
-   if( options.beatDuration !== undefined )
-      settings.beatDuration = options.beatDuration;
+function configure(options) {
 
-	if( options.slowdown !== undefined )
-		settings.slowdown = options.slowdown;
+   const settings = this[_settings]
 
-	if( options.dwell !== undefined )
-		settings.dwell = options.dwell;
+   if (options.beatDuration !== undefined)
+      settings.beatDuration = options.beatDuration
 
-	if( options.ballColor !== undefined )
-		settings.ballColor = options.ballColor;
+   if (options.slowdown !== undefined)
+      settings.slowdown = options.slowdown
 
-	if( options.reversed !== undefined )
-		settings.reversed = options.reversed;
+   if (options.dwell !== undefined)
+      settings.dwell = options.dwell
 
-	const { beatDuration, dwell, slowdown, ballColor, reversed } = settings;
+   if (options.ballColor !== undefined)
+      settings.ballColor = options.ballColor
 
-   if( typeof beatDuration !== "number" )
-      throw new Error("Invalid configuration (`beatDuration` must be a number).");
-   if( beatDuration <= 0 )
-      throw new Error("Invalid configuration (`beatDuration` must be positive).");
+   if (options.reversed !== undefined)
+      settings.reversed = options.reversed
 
-	if( typeof slowdown !== "number" )
-		throw new Error("Invalid configuration (`slowdown` must be a number).");
-	if( slowdown <= 0 )
-		throw new Error("Invalid configuration (`slowdown` must be positive).");
+   const { beatDuration, dwell, slowdown, ballColor, reversed } = settings
 
-	if( typeof dwell !== "number" )
-		throw new Error("Invalid configuration (`dwell` must be a number).");
-	if( dwell < 0 || dwell > 1 )
-		throw new Error("Invalid configuration (`dwell` must be in [0-1] range).");
+   if (typeof beatDuration !== "number")
+      throw new Error("Invalid configuration (`beatDuration` must be a number).")
+   if (beatDuration <= 0)
+      throw new Error("Invalid configuration (`beatDuration` must be positive).")
 
-	if( typeof ballColor !== "string" )
-		throw new Error("Invalid configuration (`ballColor` must be a string).");
-	if( !/^#[0-9a-f]{3}(?:[0-9a-f]{3})?/i.test(ballColor) )
-		throw new Error("Invalid configuration (`ballColor` must be a valid css color).");
+   if (typeof slowdown !== "number")
+      throw new Error("Invalid configuration (`slowdown` must be a number).")
+   if (slowdown <= 0)
+      throw new Error("Invalid configuration (`slowdown` must be positive).")
 
-	if( typeof reversed !== "boolean" )
-		throw new Error("Invalid configuration (`reversed` must be a boolean).");
+   if (typeof dwell !== "number")
+      throw new Error("Invalid configuration (`dwell` must be a number).")
+   if (dwell < 0 || dwell > 1)
+      throw new Error("Invalid configuration (`dwell` must be in [0-1] range).")
+
+   if (typeof ballColor !== "string")
+      throw new Error("Invalid configuration (`ballColor` must be a string).")
+   if (!/^#[0-9a-f]{3}(?:[0-9a-f]{3})?/i.test(ballColor))
+      throw new Error("Invalid configuration (`ballColor` must be a valid css color).")
+
+   if (typeof reversed !== "boolean")
+      throw new Error("Invalid configuration (`reversed` must be a boolean).")
 
 }
 
-export { configure };
+export { configure }

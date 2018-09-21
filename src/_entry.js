@@ -1,3 +1,3 @@
 
-import { Animator } from "./Animator";
-export { Animator as default };
+import { Animator } from "./Animator"
+export { Animator as default }
