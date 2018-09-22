@@ -15,7 +15,7 @@ export default {
    }),
 
    created(){
-      this.$emit("update:resize", storage.get("resize") || 100)
+      this.$emit("update:resize", storage.get("resize") || 900)
    },
 
    mounted(){
@@ -38,6 +38,7 @@ export default {
          if( !this.dragging )
             return
 
+         // We emit the number of pixels left of the screen the mouse is at.
          const left = e.clientX - this.$el.offsetWidth / 2
          storage.set("resize", left)
          this.$emit("update:resize", left)

@@ -48,7 +48,7 @@ export default {
          "beatDuration": {
             label: "Juggling speed",
             options: [{ value: 400, label: "Slow" }, { value: 333, label: "Normal" }, { value: 267, label: "Fast" }],
-            selected: 1
+            selected: 2
          },
          "dwell": {
             label: "Dwell time (%)",
