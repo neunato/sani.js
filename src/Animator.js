@@ -18,11 +18,13 @@ class Animator {
 
    constructor(canvas, options = {}) {
 
-      const element = typeof canvas === "string" ? document.getElementById(canvas) : canvas
-      if (!element)
+      if (typeof canvas === "string")
+         canvas = document.getElementById(canvas)
+
+      if (!(canvas instanceof HTMLCanvasElement))
          throw new Error("Canvas element not supplied.")
 
-      this.context = element.getContext("2d")
+      this.context = canvas.getContext("2d")
       this.siteswap = null
 
       this[_loop] = null

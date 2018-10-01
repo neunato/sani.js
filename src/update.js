@@ -18,6 +18,10 @@ function update(animator, delta) {
 
    // Canvas size changed, rescale animation.
    if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
+
+      // Set new canvas size.
+      canvas.width = canvas.clientWidth
+      canvas.height = canvas.clientHeight
       scale(animator)
 
       // If paused stuff won't redraw, that's why.
