@@ -31,11 +31,11 @@ class Animator {
 
       // Default settings.
       this[_settings] = {
-
          // Configurable by `this.configure`.
          dwell: 0.5,
          slowdown: 1,
          reversed: false,
+         continuous: true,
          ballColor: "#ff3636",
          beatDuration: 300,       // In miliseconds.
 
@@ -47,7 +47,6 @@ class Animator {
          catchHeight: 0,          // In milimetres. Set by `.scale()`.
 
          multiplier: null         // Pixels per milimetre.
-
       }
       this.configure(options)
 

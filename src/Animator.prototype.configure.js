@@ -21,7 +21,10 @@ function configure(options) {
    if (options.reversed !== undefined)
       settings.reversed = options.reversed
 
-   const { beatDuration, dwell, slowdown, ballColor, reversed } = settings
+   if (options.continuous !== undefined)
+      settings.continuous = options.continuous
+
+   const { beatDuration, dwell, slowdown, ballColor, reversed, continuous } = settings
 
    if (typeof beatDuration !== "number")
       throw new Error("Invalid configuration (`beatDuration` must be a number).")
@@ -45,6 +48,9 @@ function configure(options) {
 
    if (typeof reversed !== "boolean")
       throw new Error("Invalid configuration (`reversed` must be a boolean).")
+
+   if (typeof continuous !== "boolean")
+      throw new Error("Invalid configuration (`continuous` must be a boolean).")
 
 }
 
