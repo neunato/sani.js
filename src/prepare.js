@@ -218,10 +218,8 @@ function prepare(animator) {
    const [schedule] = siteswap.strictStates
    for (const state of schedule) {
       for (let beat = 0; beat < state.length; beat++) {
-         for (const id of state[beat]) {
+         for (const id of state[beat])
             balls[id - 1].animations[-1] = new WaitAnimation(beat * beatDuration)
-            balls[id - 1].animationAt = -1
-         }
       }
    }
 

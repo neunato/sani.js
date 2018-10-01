@@ -4,6 +4,7 @@ import { start }     from "./Animator.prototype.start"
 import { stop }      from "./Animator.prototype.stop"
 import { pause }     from "./Animator.prototype.pause"
 import { dye }       from "./Animator.prototype.dye"
+import { seek }      from "./Animator.prototype.seek"
 
 
 const _settings = Symbol.for("settings")
@@ -59,6 +60,7 @@ Animator.prototype.stop = stop
 Animator.prototype.pause = pause
 Animator.prototype.configure = configure
 Animator.prototype.dye = dye
+Animator.prototype.seek = seek
 
 
 export { Animator }

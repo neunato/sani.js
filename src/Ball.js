@@ -5,21 +5,29 @@ class Ball {
 
       this.position = { x: NaN, y: NaN }
       this.color = color
-      this.animationAt = 0
+      this.animationAt = -1
       this.animations = []
       this.elapsed = 0
 
    }
 
-   update(delta) {
+   update(delta, reset = false) {
+
+      const { animations } = this
+
+      if (reset) {
+         this.animationAt = -1
+         this.elapsed = 0
+      }
 
       this.elapsed += delta
 
-      const animation = this.animations[this.animationAt]
-      if (this.elapsed >= animation.duration) {
-         this.animationAt = (this.animationAt + 1) % this.animations.length
-         this.elapsed = this.elapsed - animation.duration
-         return this.update(0)
+      let animation = animations[this.animationAt]
+
+      while (this.elapsed >= animation.duration) {
+         this.animationAt = (this.animationAt + 1) % animations.length
+         this.elapsed -= animation.duration
+         animation = animations[this.animationAt]
       }
 
       this.position = animation.getPosition(this.elapsed)
