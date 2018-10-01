@@ -9,16 +9,25 @@ const _paused = Symbol.for("paused")
 const _loop = Symbol.for("loop")
 
 
-function start(siteswap, notation) {
+// Start playing new `siteswap` or unpause (if no siteswap supplied).
 
-   // Already running.
-   if (this[_loop])
+function play(siteswap) {
+
+   this[_paused] = false
+
+   if (siteswap === undefined)
+      return
+
+   if (this[_loop])            // Already running.
       this.stop()
 
    if (typeof siteswap === "string")
-      siteswap = new Siteswap(siteswap, notation)
+      siteswap = new Siteswap(siteswap)
 
    this.siteswap = siteswap
+
+   if (!(siteswap instanceof Siteswap))
+      throw new Error("Invalid input.")
 
    if (!siteswap.valid)
       throw new Error("Invalid siteswap.")
@@ -35,9 +44,8 @@ function start(siteswap, notation) {
    if (this[_settings].continuous)
       this.seek(0, true)
 
-   this[_paused] = false
    this[_loop] = new Loop((delta) => update(this, delta))
 
 }
 
-export { start }
+export { play }

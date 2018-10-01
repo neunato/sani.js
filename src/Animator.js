@@ -1,6 +1,6 @@
 
 import { configure } from "./Animator.prototype.configure"
-import { start }     from "./Animator.prototype.start"
+import { play }      from "./Animator.prototype.play"
 import { stop }      from "./Animator.prototype.stop"
 import { pause }     from "./Animator.prototype.pause"
 import { dye }       from "./Animator.prototype.dye"
@@ -54,7 +54,7 @@ class Animator {
 
 }
 
-Animator.prototype.start = start
+Animator.prototype.play = play
 Animator.prototype.stop = stop
 Animator.prototype.pause = pause
 Animator.prototype.configure = configure
