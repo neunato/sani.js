@@ -4,8 +4,6 @@ Siteswap animator in JavaScript for modern browsers (tested in Chrome, Firefox, 
 
 Supports (multiplex) asynchronous and synchronous juggling patterns.
 
-[Check it out!](https://independentgeorge.github.io/sani.js/)
-
 
 ## Usage
 
@@ -22,39 +20,39 @@ Create a canvas
 
 Create an animator and start juggling!
 ```javascript
-const animator = new Animator("canvasID");
-animator.start("753");
-```
-
-
-#### Configuration
-
-Use the second parameter of the constructor to set the initial configuration.
-
-```javascript
-const settings = {
-   beatDuration: 300,
-   dwell: 0.5,
+const animator = new Animator("canvasID", {
+   beatDuration: 200,
+   dwell: 0.4,
    slowdown: 2
-};
-const animator = new Animator("canvasID", settings);
-animator.start("(6x,4)*");
+})
+animator.play("753")
 ```
 
-Or `.configure()` to do it after it's instantiated.
+## API
 
-```javascript
-const animator = new Animator("canvasID");
-const settings = {
-   beatDuration: 300,
-   dwell: 0.5,
-   slowdown: 2
-};
-animator.configure(settings);
-animator.start("[54][65]1");
-```
+### `Animator(canvas, settings = {})`
 
-Type and value of a property of the configuration object must be allowed by the following table to overwrite what was previously set. Invalid inputs are silently ignored.
+Create an animator instance given a `canvas` (id or element) and a `settings` object forwareded to [`Animator.prototype.configure`](#animator-prototype-configure-settings-).
+
+### `Animator.prototype.play(siteswap = null)`
+
+Start playing new `siteswap` (string passed to or an instance of [`Siteswap`](https://github.com/independentgeorge/siteswap.js)) or unpause if no siteswap supplied.
+
+### `Animator.prototype.pause()`
+
+Pause the animation.
+
+### `Animator.prototype.stop()`
+
+Stop the animation.
+
+### `Animator.prototype.seek(percent, continuous = false)`
+
+Go to a certain `percent` of the animation (100% being one coloured cycle) relative to the beginning of  second cycle if `continuous` is true (all balls in screen), or first otherwise (balls appear as their turn comes).
+
+### `Animator.prototype.configure(settings)`
+
+Type and value of a property of the configuration object must be allowed by the following table to overwrite what was previously set.
 
 |Property        |Type            |Allowed values  |Default     |Description
 | -------------- | -------------- | -------------- | ---------- | -------------------------------------------------------------------
@@ -62,6 +60,7 @@ Type and value of a property of the configuration object must be allowed by the 
 |`slowdown`      |*Number*        |float           |1           |Number of real seconds per animator second.
 |`dwell`         |*Number*        |float [0-1]     |0.5         |Hold time, expressed as ratio of full to empty hand.<sup>2</sup>
 |`reversed`      |*Boolean*       |true, false     |false       |Inside or outside tosses.
+|`continuous`    |*Boolean*       |true, false     |true        |Begin the animation with balls on screen.
 |`ballColor`     |*String*        |[css color][1]  |"#ff3636"   |Color of balls.
 
 <sup>1</sup> *Beat duration is doubled when juggling synchronously as jugglers tend to slow down in reality.*  
@@ -71,7 +70,6 @@ Type and value of a property of the configuration object must be allowed by the 
 ## To do
 
 - Cache canvas arc paths and draw images.
-- Start juggling in the middle of a siteswap (optionally?).
 - Create and hook up a space time diagram.
 - GIF exporting.
 - Throw value labels.
