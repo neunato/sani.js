@@ -63,7 +63,10 @@ export default {
          
          // Toggle pause on space.
          else if( e.keyCode === 32 && document.activeElement.tagName !== "INPUT" ){
-            this.animator.pause()
+            if (this.animator.paused)
+               this.animator.play()
+            else
+               this.animator.pause()
          }
       })
 
@@ -73,7 +76,7 @@ export default {
 
       juggle(){
          try{
-            this.animator.start(this.siteswap)
+            this.animator.play(this.siteswap)
          } catch(e){}
       }
 

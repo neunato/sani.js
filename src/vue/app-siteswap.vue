@@ -31,7 +31,6 @@
 
 import { storage }       from "./shared"
 import { randomElement } from "./shared"
-import Siteswap          from "siteswap.js"
 import AppInput          from "./app-input.vue"
 
 import Vue               from "vue"
@@ -89,7 +88,7 @@ export default {
 
       siteswap(){
          storage.set("siteswap", this.input)
-         return new Siteswap(this.trimmedInput)
+         return new Animator.Siteswap(this.trimmedInput)
       },
       
       siteswapStates(){
