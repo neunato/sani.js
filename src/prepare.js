@@ -29,7 +29,7 @@ function strictifyThrows(siteswap) {
    const n = lcm(siteswap.throws.length, 2)
    for (let i = 0; i < n; i++) {
       const action = [[], []]
-      const release = siteswap.throws[i % siteswap.throws.length][0].map((toss) => ({ value: toss.value, handFrom: i % 2, handTo: (i + toss.value) % 2 }))
+      const release = siteswap.throws[i % siteswap.throws.length][0].map((toss) => ({ value: toss.value, from: i % 2, to: (i + toss.value) % 2 }))
       action[i % 2] = release
       throws.push(action)
    }
@@ -119,7 +119,7 @@ function prepare(settings, siteswap) {
       // `([553])` => [{ '5-0': 2, '3-0': 1 }]
       const multiplexes = action.map((release) => {
          return release.reduce((result, toss) => {
-            const key = `${toss.value}-${toss.handTo}`
+            const key = `${toss.value}-${toss.to}`
             result[key] = (result[key] || 0) + 1
             return result
          }, {})
@@ -153,7 +153,7 @@ function prepare(settings, siteswap) {
 
             // Multiplex step (time two twin throws will differ in).
             const dwellStep = greatestTwinCount === 1 ? 0 : Math.min(minDwell, (dwell - minDwell) / (greatestTwinCount - 1))
-            const at = --multiplexes[h][`${toss.value}-${toss.handTo}`]
+            const at = --multiplexes[h][`${toss.value}-${toss.to}`]
 
             // Synchronise tosses and releases when there are multiplex twin tosses.
             let launchTime = dwell - ((greatestTwinCount - 1) * dwellStep)
@@ -184,8 +184,8 @@ function prepare(settings, siteswap) {
             catchHeight = Math.min(launchTime * 3, catchHeight)
             catchHeight = Math.min(lowestValue === 2 ? 100 : lowestThrowHeight * 0.5, catchHeight)
 
-            x1 = toss.handFrom === 0 ? 0 : innerWidth
-            x2 = toss.handFrom === 0 ? catchWidth : innerWidth - catchWidth
+            x1 = toss.from === 0 ? 0 : innerWidth
+            x2 = toss.from === 0 ? catchWidth : innerWidth - catchWidth
 
             if (settings.reversed)
                [x1, x2] = [x2, x1]
@@ -206,16 +206,16 @@ function prepare(settings, siteswap) {
             // Throw animation.
             const throwHeight = motion.s(0, -gravity.y, airTime / 2)
 
-            x1 = toss.handFrom === 0 ? catchWidth : innerWidth - catchWidth
-            x2 = toss.handTo === 0 ? 0 : innerWidth
+            x1 = toss.from === 0 ? catchWidth : innerWidth - catchWidth
+            x2 = toss.to === 0 ? 0 : innerWidth
 
             if (settings.reversed) {
-               if (toss.handFrom === toss.handTo) {
+               if (toss.from === toss.to) {
                   [x1, x2] = [x2, x1]
                }
                else {
-                  x1 += toss.handFrom === 0 ? -catchWidth : catchWidth
-                  x2 += toss.handFrom === 0 ? -catchWidth : catchWidth
+                  x1 += toss.from === 0 ? -catchWidth : catchWidth
+                  x2 += toss.from === 0 ? -catchWidth : catchWidth
                }
             }
 
