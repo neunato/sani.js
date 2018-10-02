@@ -2,9 +2,7 @@
 import { scale } from "./scale"
 import { clear } from "./clear"
 
-
 const _settings = Symbol.for("settings")
-const _paused = Symbol.for("paused")
 const _balls = Symbol.for("balls")
 
 
@@ -14,7 +12,6 @@ function update(animator, delta) {
    const { canvas } = context
    const settings = animator[_settings]
    const balls = animator[_balls]
-   const paused = animator[_paused]
 
    // Canvas size changed, rescale animation.
    if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
@@ -25,14 +22,14 @@ function update(animator, delta) {
       scale(animator)
 
       // If paused stuff won't redraw, that's why.
-      if (paused) {
+      if (animator.paused) {
          for (const ball of balls)
             ball.draw(context, settings)
       }
 
    }
 
-   if (paused)
+   if (animator.paused)
       return
 
 

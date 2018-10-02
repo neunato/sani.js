@@ -6,7 +6,6 @@ import { scale } from "./scale"
 import { update }  from "./update"
 
 const _settings = Symbol.for("settings")
-const _paused = Symbol.for("paused")
 const _balls = Symbol.for("balls")
 const _loop = Symbol.for("loop")
 
@@ -15,7 +14,7 @@ const _loop = Symbol.for("loop")
 
 function play(siteswap) {
 
-   this[_paused] = false
+   this.paused = false
 
    if (siteswap === undefined)
       return

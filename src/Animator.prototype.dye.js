@@ -2,7 +2,6 @@
 import { clear } from "./clear"
 
 const _settings = Symbol.for("settings")
-const _paused = Symbol.for("paused")
 const _balls = Symbol.for("balls")
 
 
@@ -25,7 +24,7 @@ function dye(color, id) {
    }
 
 
-   if (this[_paused]) {
+   if (this.paused) {
       clear(context)
       for (const ball of balls)
          ball.draw(context, settings)

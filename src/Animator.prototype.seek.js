@@ -3,7 +3,6 @@ import { clear } from "./clear"
 
 const _balls = Symbol.for("balls")
 const _settings = Symbol.for("settings")
-const _paused = Symbol.for("paused")
 
 
 // Update the animation to `percent` % of full cycle duration, relative to the beginning of second
@@ -23,7 +22,6 @@ function seek(percent, continuous = false) {
 
    const settings = this[_settings]
    const balls = this[_balls]
-   const paused = this[_paused]
    const duration = this.siteswap.fullPeriod * (this.siteswap.fullPeriod % 2 ? 2 : 1) * settings.beatDuration
    const { context } = this
 
@@ -32,7 +30,7 @@ function seek(percent, continuous = false) {
       ball.update(percent / 100 * duration, true)
 
    // Paused animator does not update unless resized.
-   if (paused) {
+   if (this.paused) {
       clear(context)
       for (const ball of balls)
          ball.draw(context, settings)

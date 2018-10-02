@@ -8,7 +8,6 @@ import { seek }      from "./Animator.prototype.seek"
 
 
 const _settings = Symbol.for("settings")
-const _paused = Symbol.for("paused")
 const _balls = Symbol.for("balls")
 const _loop = Symbol.for("loop")
 
@@ -26,9 +25,9 @@ class Animator {
 
       this.context = canvas.getContext("2d")
       this.siteswap = null
+      this.paused = false
 
       this[_loop] = null
-      this[_paused] = false
       this[_balls] = []
 
       // Default settings.
