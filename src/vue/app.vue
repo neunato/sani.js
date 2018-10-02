@@ -7,7 +7,7 @@
             <app-settings @update:settings="settings = arguments[0]" @update:collapsed="collapsed = arguments[0]"></app-settings>
          </nav>
 
-         <main @mousedown.left="animator.pause()" :style="{ right }">
+         <main @mousedown.left="pause()" :style="{ right }">
             <canvas id="animator-canvas" ref="canvas"></canvas>
             <app-resize @update:resize="resize = arguments[0]"></app-resize>
          </main>
@@ -63,10 +63,7 @@ export default {
          
          // Toggle pause on space.
          else if( e.keyCode === 32 && document.activeElement.tagName !== "INPUT" ){
-            if (this.animator.paused)
-               this.animator.play()
-            else
-               this.animator.pause()
+            this.pause()
          }
       })
 
@@ -78,6 +75,13 @@ export default {
          try{
             this.animator.play(this.siteswap)
          } catch(e){}
+      },
+
+      pause(){
+         if (this.animator.paused)
+            this.animator.play()
+         else
+            this.animator.pause()
       }
 
    },
