@@ -30,9 +30,9 @@ animator.play("753")
 
 ## API
 
-### `Animator(canvas, settings = {})`
+### `new Animator(canvas, settings = {})`
 
-Create an animator instance given a `canvas` (id or element) and a `settings` object forwareded to [`Animator.prototype.configure`](#animator-prototype-configure-settings-).
+Create an animator instance given a `canvas` (id or element) and a `settings` object forwareded to [`Animator.prototype.configure`](#animatorprototypeconfiguresettings).
 
 ### `Animator.prototype.play(siteswap = null)`
 
@@ -65,6 +65,10 @@ Type and value of a property of the configuration object must be allowed by the 
 
 <sup>1</sup> *Beat duration is doubled when juggling synchronously as jugglers tend to slow down in reality.*  
 <sup>2</sup> *Dwell time ranges 0-2 beats in asynchronous, and 0-1 in synchronous juggling.*  
+
+### `new Animator.Siteswap(string, notation = "compressed")`
+
+Create an instance of [`Siteswap`](https://github.com/independentgeorge/siteswap.js).
 
 
 ## To do

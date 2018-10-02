@@ -1,4 +1,5 @@
 
+import Siteswap      from "siteswap.js"
 import { configure } from "./Animator.prototype.configure"
 import { play }      from "./Animator.prototype.play"
 import { stop }      from "./Animator.prototype.stop"
@@ -6,11 +7,9 @@ import { pause }     from "./Animator.prototype.pause"
 import { dye }       from "./Animator.prototype.dye"
 import { seek }      from "./Animator.prototype.seek"
 
-
 const _settings = Symbol.for("settings")
 const _balls = Symbol.for("balls")
 const _loop = Symbol.for("loop")
-
 
 
 class Animator {
@@ -55,6 +54,7 @@ class Animator {
 
 }
 
+Animator.Siteswap = Siteswap
 Animator.prototype.play = play
 Animator.prototype.stop = stop
 Animator.prototype.pause = pause

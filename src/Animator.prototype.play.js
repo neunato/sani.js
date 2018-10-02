@@ -1,8 +1,7 @@
 
-import Siteswap    from "siteswap.js"
 import { Loop }    from "./Loop"
 import { prepare } from "./prepare"
-import { scale } from "./scale"
+import { scale }   from "./scale"
 import { update }  from "./update"
 
 const _settings = Symbol.for("settings")
@@ -22,6 +21,8 @@ function play(siteswap) {
    // Already running.
    if (this[_loop])
       this.stop()
+
+   const { Siteswap } = this.constructor
 
    if (typeof siteswap === "string")
       siteswap = new Siteswap(siteswap)
