@@ -42,7 +42,6 @@ function play(siteswap) {
       return
 
    const settings = this[_settings]
-   const { canvas } = this.context
 
    // Populate balls and new inner size (in metres).
    const [balls, { innerWidth, innerHeight, catchHeight }] = prepare(settings, siteswap)
@@ -54,8 +53,6 @@ function play(siteswap) {
    this[_balls] = balls
 
    // Scale and center animation.
-   canvas.width = canvas.clientWidth
-   canvas.height = canvas.clientHeight
    scale(this)
 
    // Start with balls on screen.

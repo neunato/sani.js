@@ -14,11 +14,8 @@ function update(animator, delta) {
    const balls = animator[_balls]
 
    // Canvas size changed, rescale animation.
-   if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
-      canvas.width = canvas.clientWidth
-      canvas.height = canvas.clientHeight
+   if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight)
       scale(animator)
-   }
 
    // Update ball positions.
    clear(context)

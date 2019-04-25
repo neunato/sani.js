@@ -9,6 +9,11 @@ function scale(animator) {
    const { context } = animator
    const { canvas } = context
    const settings = animator[_settings]
+   const dpr = window.devicePixelRatio || 1
+
+   // Match canvas size to css size, including pixel ratio.
+   canvas.width = canvas.clientWidth * dpr
+   canvas.height = canvas.clientHeight * dpr
 
    // Convert metres to pixels.
    settings.multiplier = Math.max(0, Math.min(
@@ -32,6 +37,6 @@ function scale(animator) {
    // Invert y axis.
    context.scale(1, -1)
 
-};
+}
 
 export { scale }
