@@ -15,29 +15,17 @@ function update(animator, delta) {
 
    // Canvas size changed, rescale animation.
    if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
-
-      // Set new canvas size.
       canvas.width = canvas.clientWidth
       canvas.height = canvas.clientHeight
       scale(animator)
-
-      // If paused stuff won't redraw, that's why.
-      if (animator.paused) {
-         for (const ball of balls)
-            ball.draw(context, settings)
-      }
-
    }
-
-   if (animator.paused)
-      return
-
 
    // Update ball positions.
    clear(context)
 
    for (const ball of balls) {
-      ball.update(delta / settings.slowdown)
+      if (!animator.paused)
+         ball.update(delta / settings.slowdown)
       ball.draw(context, settings)
    }
 

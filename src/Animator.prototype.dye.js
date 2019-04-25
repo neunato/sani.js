@@ -1,7 +1,4 @@
 
-import { clear } from "./clear"
-
-const _settings = Symbol.for("settings")
 const _balls = Symbol.for("balls")
 
 
@@ -10,8 +7,6 @@ const _balls = Symbol.for("balls")
 function dye(color, id) {
 
    const balls = this[_balls]
-   const settings = this[_settings]
-   const { context } = this
 
    if (id === undefined) {
       for (const ball of balls)
@@ -21,13 +16,6 @@ function dye(color, id) {
       if (!balls[id])
          throw new Error("Ball doesn't exist.")
       balls[id].color = color
-   }
-
-
-   if (this.paused) {
-      clear(context)
-      for (const ball of balls)
-         ball.draw(context, settings)
    }
 
 }

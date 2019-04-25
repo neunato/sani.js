@@ -1,6 +1,4 @@
 
-import { clear } from "./clear"
-
 const _balls = Symbol.for("balls")
 const _settings = Symbol.for("settings")
 
@@ -23,18 +21,10 @@ function seek(percent, continuous = false) {
    const settings = this[_settings]
    const balls = this[_balls]
    const duration = this.siteswap.fullPeriod * (this.siteswap.fullPeriod % 2 ? 2 : 1) * settings.beatDuration
-   const { context } = this
 
    // Update ball timings.
    for (const ball of balls)
       ball.update(percent / 100 * duration, true)
-
-   // Paused animator does not update unless resized.
-   if (this.paused) {
-      clear(context)
-      for (const ball of balls)
-         ball.draw(context, settings)
-   }
 
 }
 
