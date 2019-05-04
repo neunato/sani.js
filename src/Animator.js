@@ -10,17 +10,32 @@ import { seek }      from "./Animator.prototype.seek"
 const _settings = Symbol.for("settings")
 const _balls = Symbol.for("balls")
 const _loop = Symbol.for("loop")
+const _virtual = Symbol.for("virtual")
 
 
 class Animator {
 
    constructor(canvas, options = {}) {
 
+      this[_virtual] = false
+
       if (typeof canvas === "string")
          canvas = document.getElementById(canvas)
 
-      if (!(canvas instanceof HTMLCanvasElement))
-         throw new Error("Canvas element not supplied.")
+      if (!(canvas instanceof HTMLCanvasElement)) {
+
+         // Passing an object with { width, height } implies a virtual animator, whose canvas is not in the DOM.
+         if (typeof canvas === "object" && canvas.width && canvas.height) {
+            const { width, height } = canvas
+            canvas = document.createElement("canvas")
+            canvas.width = width
+            canvas.height = height
+            this[_virtual] = true
+         }
+         else {
+            throw new Error("Canvas element not supplied.")
+         }
+      }
 
       this.context = canvas.getContext("2d")
       this.siteswap = null

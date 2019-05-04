@@ -4,6 +4,7 @@ import { clear } from "./clear"
 
 const _settings = Symbol.for("settings")
 const _balls = Symbol.for("balls")
+const _virtual = Symbol.for("virtual")
 
 
 function update(animator, delta) {
@@ -14,7 +15,7 @@ function update(animator, delta) {
    const balls = animator[_balls]
 
    // Canvas size changed, rescale animation.
-   if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight)
+   if (!animator[_virtual] && (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight))
       scale(animator)
 
    // Update ball positions.
