@@ -1,11 +1,13 @@
 
-import Siteswap      from "siteswap.js"
-import { configure } from "./Animator.prototype.configure"
-import { play }      from "./Animator.prototype.play"
-import { stop }      from "./Animator.prototype.stop"
-import { pause }     from "./Animator.prototype.pause"
-import { dye }       from "./Animator.prototype.dye"
-import { seek }      from "./Animator.prototype.seek"
+import Siteswap                 from "siteswap.js"
+import { configure }            from "./Animator.prototype.configure"
+import { play }                 from "./Animator.prototype.play"
+import { stop }                 from "./Animator.prototype.stop"
+import { pause }                from "./Animator.prototype.pause"
+import { dye }                  from "./Animator.prototype.dye"
+import { seek }                 from "./Animator.prototype.seek"
+import { toGIF }                from "./Animator.prototype.toGIF"
+import { toGIF as toGIFStatic } from "./Animator.toGIF"
 
 const _settings = Symbol.for("settings")
 const _balls = Symbol.for("balls")
@@ -76,6 +78,8 @@ Animator.prototype.pause = pause
 Animator.prototype.configure = configure
 Animator.prototype.dye = dye
 Animator.prototype.seek = seek
+Animator.prototype.toGIF = toGIF
+Animator.toGIF = toGIFStatic
 
 
 export { Animator }

@@ -32,7 +32,7 @@ animator.play("753")
 
 ### `new Animator(canvas, settings = {})`
 
-Create an animator instance given a `canvas` (id or element) and a `settings` object forwareded to [`Animator.prototype.configure`](#animatorprototypeconfiguresettings).
+Create an animator instance given a `canvas` (id or element) and a `settings` object forwarded to [`Animator.prototype.configure()`](#animatorprototypeconfiguresettings).
 
 ### `Animator.prototype.play(siteswap = null)`
 
@@ -66,6 +66,24 @@ Type and value of a property of the configuration object must be allowed by the 
 <sup>1</sup> *Beat duration is doubled when juggling synchronously as jugglers tend to slow down in reality.*  
 <sup>2</sup> *Dwell time ranges 0-2 beats in asynchronous, and 0-1 in synchronous juggling.*  
 
+### `Animator.prototype.toGIF(settings)`
+
+Calls and returns [`Animator.toGIF()`](#animatortogifsiteswapsettings) with animator's siteswap and settings (including canvas size).
+
+### `Animator.toGIF(siteswap, settings)`
+
+Returns a promise that resolves with the GIF blob. The promise's `.then(onResolve, onReject, onProgress)` accepts a third callback parameter that gets called with progress percentage ([0-1] range) as frames are processed.
+
+`settings` are forwarded to [`Animator.prototype.configure()`](#animatorprototypeconfiguresettings), but also support some GIF specific configuration:
+
+|Property         |Type            |Allowed values  |Default     |Description
+| --------------- | -------------- | -------------- | ---------- | -------------------------------------------------------------------
+|`width`          |*Number*        |integer         |300         |GIF width in pixels.
+|`height`         |*Number*        |integer         |600         |GIF height in pixels.
+|`fps`            |*Number*        |integer         |60          |GIF frames per second.
+|`backgroundColor`|*String*        |[css color][1]  |"#fff"      |GIF background color.
+
+
 ### `new Animator.Siteswap(string, notation = "compressed")`
 
 Create an instance of [`Siteswap`](https://github.com/independentgeorge/siteswap.js).
@@ -75,7 +93,6 @@ Create an instance of [`Siteswap`](https://github.com/independentgeorge/siteswap
 
 - Cache canvas arc paths and draw images.
 - Create and hook up a space time diagram.
-- GIF exporting.
 - Throw value labels.
 - Make `2`s held (custom animation which includes catch and throw?).
 - Make holding more than one ball apparent (multiplex positions)?
