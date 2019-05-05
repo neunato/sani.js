@@ -53,7 +53,7 @@ function play(siteswap) {
    this[_balls] = balls
 
    // Scale and center animation.
-   scale(this)
+   scale(this, false)
 
    // Start with balls on screen.
    if (this[_settings].continuous)

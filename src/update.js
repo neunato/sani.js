@@ -10,12 +10,12 @@ const _virtual = Symbol.for("virtual")
 function update(animator, delta) {
 
    const { context } = animator
-   const { canvas } = context
    const settings = animator[_settings]
    const balls = animator[_balls]
+   const virtual = animator[_virtual]
 
-   // Canvas size changed, rescale animation.
-   if (!animator[_virtual] && (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight))
+   // Rescale animation.
+   if (!virtual)
       scale(animator)
 
    // Update ball positions.

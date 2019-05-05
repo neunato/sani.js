@@ -5,43 +5,54 @@ const _virtual = Symbol.for("virtual")
 // Scales and centers animation based on canvas size (`canvas.width` and `canvas.height`) and
 // inner size (`settings.innerWidth`, `settings.innerHeight` and `settings.catchHeight`).
 
-function scale(animator) {
+function scale(animator, reactive = true) {
 
-   const { context } = animator
-   const { canvas } = context
-   const settings = animator[_settings]
-   const dpr = window.devicePixelRatio || 1
-   const { innerWidth, innerHeight, catchHeight, ballRadius } = settings
+   const virtual = animator[_virtual]
+   const { canvas } = animator.context
 
-   // Match canvas size to css size, including pixel ratio.
-   if (!animator[_virtual]) {
-      canvas.width = canvas.clientWidth * dpr
-      canvas.height = canvas.clientHeight * dpr
+   // Resize canvas to match css size, unless `virtual`. If `reactive` is true, abort the function
+   // if canvas size hasn't changed (it's false when first playing a siteswap, when scaling is wanted
+   // regardless of canvas being changed).
+   if (!virtual) {
+      const dpr = window.devicePixelRatio || 1
+      const width = Math.floor(canvas.clientWidth * dpr)
+      const height = Math.floor(canvas.clientHeight * dpr)
+
+      if (reactive && canvas.width === width && canvas.height === height)
+         return
+
+      canvas.width = width
+      canvas.height = height
    }
 
-   // Convert metres to pixels.
+   const settings = animator[_settings]
+   const { context } = animator
+   const { width, height } = canvas
+   const { innerWidth, innerHeight, catchHeight, ballRadius } = settings
+
+   // Scale animation by converting metres to pixels.
    const multiplier = Math.max(0, Math.min(
-      canvas.width / (innerWidth + (ballRadius * 2)),
-      canvas.height / (innerHeight + (ballRadius * 2))
+      width / (innerWidth + (ballRadius * 2)),
+      height / (innerHeight + (ballRadius * 2))
    ))
    settings.multiplier = multiplier
+
 
    // Center the animation by translating the canvas. This adjusts for the internal y-origin that
    // matches catch height and the required offset of one screen as y axis will be inverted.
    const surplus = {
-      x: Math.max(0, canvas.width - ((innerWidth + (ballRadius * 2)) * multiplier)),
-      y: Math.max(0, canvas.height - ((innerHeight + (ballRadius * 2)) * multiplier))
+      x: Math.max(0, width - ((innerWidth + (ballRadius * 2)) * multiplier)),
+      y: Math.max(0, height - ((innerHeight + (ballRadius * 2)) * multiplier))
    }
    const offset = {
       x: (surplus.x * 0.5) + (ballRadius * multiplier),
       y: (surplus.y * 0.5) + (ballRadius * multiplier)
    }
 
-   context.translate(offset.x, canvas.height - offset.y - (catchHeight * multiplier))
-
-   // Invert y axis.
-   context.scale(1, -1)
+   context.translate(offset.x, height - offset.y - (catchHeight * multiplier))
+   context.scale(1, -1)                           // Invert y axis.
 
 }
+
 
 export { scale }
