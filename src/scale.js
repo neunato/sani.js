@@ -1,6 +1,10 @@
 
+import { cache } from "./cache"
+
 const _settings = Symbol.for("settings")
+const _balls = Symbol.for("balls")
 const _virtual = Symbol.for("virtual")
+
 
 // Scales and centers animation based on canvas size (`canvas.width` and `canvas.height`) and
 // inner size (`settings.innerWidth`, `settings.innerHeight` and `settings.catchHeight`).
@@ -26,6 +30,7 @@ function scale(animator, reactive = true) {
    }
 
    const settings = animator[_settings]
+   const balls = animator[_balls]
    const { context } = animator
    const { width, height } = canvas
    const { innerWidth, innerHeight, catchHeight, ballRadius } = settings
@@ -51,6 +56,10 @@ function scale(animator, reactive = true) {
 
    context.translate(offset.x, height - offset.y - (catchHeight * multiplier))
    context.scale(1, -1)                           // Invert y axis.
+
+
+   // Redraw and cache balls.
+   cache(balls, settings)
 
 }
 

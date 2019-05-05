@@ -91,7 +91,6 @@ Create an instance of [`Siteswap`](https://github.com/independentgeorge/siteswap
 
 ## To do
 
-- Cache canvas arc paths and draw images.
 - Create and hook up a space time diagram.
 - Throw value labels.
 - Make `2`s held (custom animation which includes catch and throw?).
